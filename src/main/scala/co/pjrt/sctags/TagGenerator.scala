@@ -10,18 +10,28 @@ object TagGenerator {
   def generateTags(tree: Tree): Seq[Tag] = {
 
     tree.collect {
-      case obj: Defn.Object =>
-        obj.children.flatMap(c => generateForChildren(obj.name, c))
+      // For objects, generate two tags: one for the basic token and one for
+      // Object.TokenName
+      case obj: Defn.Object if obj.templ.stats.isDefined =>
+        obj.templ.stats.get
+          .flatMap(c => generateForChildren(Some(obj.name), c))
+      // Classes' functions can't be access in a quantified way, so just create
+      // the plain token tag
+      case cls: Defn.Class if cls.templ.stats.isDefined =>
+        cls.templ.stats.get.flatMap(c => generateForChildren(None, c))
     }.flatten
   }
 
   private def generateForChildren(
-      lastParent: Term.Name,
+      lastParent: Option[Term.Name],
       child: Tree
     ): Seq[Tag] =
     child match {
       case d: Defn.Def =>
-        Seq(Tag(Some(lastParent), d.name, d.mods, d.pos))
+        val basicTag = Tag(None, d.name, d.mods, d.pos)
+        basicTag :: lastParent
+          .map(l => Tag(Some(l), d.name, d.mods, d.pos))
+          .toList
       case obj: Defn.Object =>
         generateTags(obj)
     }
