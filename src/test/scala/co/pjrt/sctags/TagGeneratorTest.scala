@@ -18,8 +18,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 1
+    tags.size shouldBe 2
     tags.toSet shouldBe Set(
+      Tag(None, "SomeClass", Nil, TagPosition(3, 6)),
       Tag(None, "hello", Nil, TagPosition(4, 5))
     )
   }
@@ -34,8 +35,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 2
+    tags.size shouldBe 3
     tags.toSet shouldBe Set(
+      Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
       Tag(None, "whatup", Nil, TagPosition(2, 5)),
       Tag(Some("SomeObject"), "whatup", Nil, TagPosition(2, 5))
     )
@@ -53,8 +55,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 2
+    tags.size shouldBe 4
     tags.toSet shouldBe Set(
+      Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
+      Tag(None, "InnerObject", Nil, TagPosition(2, 8)),
       Tag(None, "hello", Nil, TagPosition(3, 7)),
       Tag(Some("InnerObject"), "hello", Nil, TagPosition(3, 7))
     )

@@ -19,8 +19,8 @@ case class Tag(
 object Tag {
 
   def apply(
-      prefix: Option[Term.Name],
-      basicName: Term.Name,
+      prefix: Option[Name],
+      basicName: Name,
       mods: Seq[Mod],
       pos: Position
     ): Tag = {
