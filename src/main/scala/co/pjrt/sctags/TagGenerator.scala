@@ -33,6 +33,15 @@ object TagGenerator {
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
         selfTag +: childrenTags
+      // DESNOTE(2017-03-17, prodriguez) This repetition is gonna drive me
+      // insane. There's GOT to be a better way.
+      case obj: Defn.Trait =>
+        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
+        val childrenTags: Seq[Tag] =
+          obj.templ.stats
+            .map(_.flatMap(tagsForStatement(None, _)))
+            .getOrElse(Nil)
+        selfTag +: childrenTags
     }
   }
 
@@ -64,8 +73,8 @@ object TagGenerator {
     ) = {
 
     val basicTag = Tag(None, term.name, mods, term.name.pos)
-    basicTag :: lastParent
+    basicTag +: lastParent
       .map(l => Tag(Some(l), term.name, mods, term.name.pos))
-      .toList
+      .toSeq
   }
 }

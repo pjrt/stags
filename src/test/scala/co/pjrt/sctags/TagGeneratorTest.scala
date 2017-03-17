@@ -25,6 +25,25 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
+  "Should generate unquantified tags for traits" in {
+    val testFile =
+      """
+      |package co.pjrt.sctags.test
+      |
+      |trait SomeTrait {
+      | def hello(name: String) = name
+      |}
+      """.stripMargin
+
+    val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+
+    tags.size shouldBe 2
+    tags.toSet shouldBe Set(
+      Tag(None, "SomeTrait", Nil, TagPosition(3, 6)),
+      Tag(None, "hello", Nil, TagPosition(4, 5))
+    )
+  }
+
   "Should generate quantified AND unquantified tags for objects" in {
     val testFile =
       """
