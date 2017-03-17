@@ -49,7 +49,7 @@ object TagGenerator {
       case d: Defn.Def =>
         tagsForTerm(lastParent, d.mods, d)
       case d: Defn.Val =>
-        d.pats.flatMap{
+        d.pats.flatMap {
           case p: Pat.Var.Term => tagsForTerm(lastParent, d.mods, p)
         }
       case obj: Defn =>
@@ -57,7 +57,11 @@ object TagGenerator {
     }
   }
 
-  private def tagsForTerm(lastParent: Option[Term.Name], mods: Seq[Mod], term: Member.Term) = {
+  private def tagsForTerm(
+      lastParent: Option[Term.Name],
+      mods: Seq[Mod],
+      term: Member.Term
+    ) = {
 
     val basicTag = Tag(None, term.name, mods, term.name.pos)
     basicTag :: lastParent
