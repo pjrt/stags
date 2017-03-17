@@ -47,12 +47,21 @@ object TagGenerator {
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
       case d: Defn.Def =>
-        val basicTag = Tag(None, d.name, d.mods, d.name.pos)
-        basicTag :: lastParent
-          .map(l => Tag(Some(l), d.name, d.mods, d.name.pos))
-          .toList
+        tagsForTerm(lastParent, d.mods, d)
+      case d: Defn.Val =>
+        d.pats.flatMap{
+          case p: Pat.Var.Term => tagsForTerm(lastParent, d.mods, p)
+        }
       case obj: Defn =>
         tagsForTopLevel(obj)
     }
+  }
+
+  private def tagsForTerm(lastParent: Option[Term.Name], mods: Seq[Mod], term: Member.Term) = {
+
+    val basicTag = Tag(None, term.name, mods, term.name.pos)
+    basicTag :: lastParent
+      .map(l => Tag(Some(l), term.name, mods, term.name.pos))
+      .toList
   }
 }

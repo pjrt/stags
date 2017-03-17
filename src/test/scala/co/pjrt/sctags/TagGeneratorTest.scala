@@ -30,15 +30,20 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """
       |object SomeObject {
       | def whatup(name: String) = name
+      | val userName, userName2 = "hello"
       |}
       """.stripMargin
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 3
+    tags.size shouldBe 7
     tags.toSet shouldBe Set(
       Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
       Tag(None, "whatup", Nil, TagPosition(2, 5)),
+      Tag(None, "userName", Nil, TagPosition(3, 5)),
+      Tag(None, "userName2", Nil, TagPosition(3, 15)),
+      Tag(Some("SomeObject"), "userName", Nil, TagPosition(3, 5)),
+      Tag(Some("SomeObject"), "userName2", Nil, TagPosition(3, 15)),
       Tag(Some("SomeObject"), "whatup", Nil, TagPosition(2, 5))
     )
   }
