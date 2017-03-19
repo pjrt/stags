@@ -38,17 +38,22 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | def hello(name: String) = name
       | type Alias = String
       | type Undefined
+      | val defined1, defined2 = "hello"
+      | val undefined: String
       |}
       """.stripMargin
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 4
+    tags.size shouldBe 7
     tags.toSet shouldBe Set(
       Tag(None, "SomeTrait", Nil, TagPosition(3, 6)),
       Tag(None, "hello", Nil, TagPosition(4, 5)),
       Tag(None, "Alias", Nil, TagPosition(5, 6)),
-      Tag(None, "Undefined", Nil, TagPosition(6, 6))
+      Tag(None, "Undefined", Nil, TagPosition(6, 6)),
+      Tag(None, "defined1", Nil, TagPosition(7, 5)),
+      Tag(None, "defined2", Nil, TagPosition(7, 15)),
+      Tag(None, "undefined", Nil, TagPosition(8, 5))
     )
   }
 

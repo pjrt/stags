@@ -61,6 +61,11 @@ object TagGenerator {
           // TODO:pjrt what about others?
           case p: Pat.Var.Term => tagsForMember(lastParent, d.mods, p)
         }
+      case d: Decl.Val =>
+        d.pats.flatMap {
+          // TODO:pjrt what about others?
+          case p: Pat.Var.Term => tagsForMember(lastParent, d.mods, p)
+        }
       case d: Defn.Type => tagsForMember(lastParent, d.mods, d)
       case d: Decl.Type => tagsForMember(lastParent, d.mods, d)
       case obj: Defn => tagsForTopLevel(obj)
