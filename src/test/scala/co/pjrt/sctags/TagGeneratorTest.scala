@@ -37,7 +37,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |trait SomeTrait {
       | def hello(name: String) = name
       | type Alias = String
-      | type Undefined
+      | type Undefined <: SomeUpper
       | val defined1, defined2 = "hello"
       | val undefined: String
       |}
@@ -64,12 +64,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | def whatup(name: String) = name
       | val userName, userName2 = "hello"
       | type Alias = Int
+      | type Decl <: SomeUpper
       |}
       """.stripMargin
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 9
+    tags.size shouldBe 11
     tags.toSet shouldBe Set(
       Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
 
@@ -77,11 +78,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       Tag(None, "userName", Nil, TagPosition(3, 5)),
       Tag(None, "userName2", Nil, TagPosition(3, 15)),
       Tag(None, "Alias", Nil, TagPosition(4, 6)),
+      Tag(None, "Decl", Nil, TagPosition(5, 6)),
 
       Tag(Some("SomeObject"), "whatup", Nil, TagPosition(2, 5)),
       Tag(Some("SomeObject"), "userName", Nil, TagPosition(3, 5)),
       Tag(Some("SomeObject"), "userName2", Nil, TagPosition(3, 15)),
-      Tag(Some("SomeObject"), "Alias", Nil, TagPosition(4, 6))
+      Tag(Some("SomeObject"), "Alias", Nil, TagPosition(4, 6)),
+      Tag(Some("SomeObject"), "Decl", Nil, TagPosition(5, 6))
     )
   }
 
@@ -115,12 +118,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | def whatup(name: String) = name
       | val userName, userName2 = "hello"
       | type Alias = Int
+      | type Decl <: SomeUpper
       |}
       """.stripMargin
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 9
+    tags.size shouldBe 11
     tags.toSet shouldBe Set(
       Tag(None, "test", Nil, TagPosition(3, 15)),
 
@@ -128,11 +132,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       Tag(None, "userName", Nil, TagPosition(5, 5)),
       Tag(None, "userName2", Nil, TagPosition(5, 15)),
       Tag(None, "Alias", Nil, TagPosition(6, 6)),
+      Tag(None, "Decl", Nil, TagPosition(7, 6)),
 
       Tag(Some("test"), "whatup", Nil, TagPosition(4, 5)),
       Tag(Some("test"), "userName", Nil, TagPosition(5, 5)),
       Tag(Some("test"), "userName2", Nil, TagPosition(5, 15)),
-      Tag(Some("test"), "Alias", Nil, TagPosition(6, 6))
+      Tag(Some("test"), "Alias", Nil, TagPosition(6, 6)),
+      Tag(Some("test"), "Decl", Nil, TagPosition(7, 6))
     )
   }
 
