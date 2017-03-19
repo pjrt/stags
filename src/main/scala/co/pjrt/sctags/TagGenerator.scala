@@ -26,6 +26,13 @@ object TagGenerator {
             .map(_.flatMap(tagsForStatement(Some(obj.name), _)))
             .getOrElse(Nil)
         selfTag +: childrenTags
+      case obj: Pkg.Object =>
+        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
+        val childrenTags: Seq[Tag] =
+          obj.templ.stats
+            .map(_.flatMap(tagsForStatement(Some(obj.name), _)))
+            .getOrElse(Nil)
+        selfTag +: childrenTags
       case obj: Defn.Class =>
         val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
         val childrenTags: Seq[Tag] =

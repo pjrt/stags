@@ -106,4 +106,34 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
+  "Should generate quantified AND unquantified tags for package object members" in {
+    val testFile =
+      """
+      |package co.pjrt.ctags
+      |
+      |package object test {
+      | def whatup(name: String) = name
+      | val userName, userName2 = "hello"
+      | type Alias = Int
+      |}
+      """.stripMargin
+
+    val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+
+    tags.size shouldBe 9
+    tags.toSet shouldBe Set(
+      Tag(None, "test", Nil, TagPosition(3, 15)),
+
+      Tag(None, "whatup", Nil, TagPosition(4, 5)),
+      Tag(None, "userName", Nil, TagPosition(5, 5)),
+      Tag(None, "userName2", Nil, TagPosition(5, 15)),
+      Tag(None, "Alias", Nil, TagPosition(6, 6)),
+
+      Tag(Some("test"), "whatup", Nil, TagPosition(4, 5)),
+      Tag(Some("test"), "userName", Nil, TagPosition(5, 5)),
+      Tag(Some("test"), "userName2", Nil, TagPosition(5, 15)),
+      Tag(Some("test"), "Alias", Nil, TagPosition(6, 6))
+    )
+  }
+
 }
