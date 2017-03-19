@@ -7,7 +7,7 @@ import org.scalatest.{Assertion, FreeSpec, Matchers}
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
-  "Should generate unquantified tags for classes" in {
+  "Should generate unqualified tags for classes" in {
     val testFile =
       """
       |package co.pjrt.sctags.test
@@ -30,7 +30,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Should generate unquantified tags for traits" in {
+  "Should generate unqualified tags for traits" in {
     val testFile =
       """
       |package co.pjrt.sctags.test
@@ -58,7 +58,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Should generate quantified AND unquantified tags for object members" in {
+  "Should generate qualified AND unqualified tags for object members" in {
     val testFile =
       """
       |object SomeObject {
@@ -87,7 +87,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Should ONLY generate quantified tags for inner objects" in {
+  "Should ONLY generate qualified tags for inner objects" in {
     val testFile =
       """
       |object SomeObject {
@@ -108,7 +108,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Should generate quantified AND unquantified tags for package object members" in {
+  "Should generate qualified AND unqualified tags for package object members" in {
     val testFile =
       """
       |package co.pjrt.ctags
