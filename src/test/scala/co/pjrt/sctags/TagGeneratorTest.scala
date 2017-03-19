@@ -1,8 +1,9 @@
 package co.pjrt.sctags
 
+import scala.collection.mutable
 import scala.meta._
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.{Assertion, FreeSpec, Matchers}
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
@@ -73,13 +74,11 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     tags.size shouldBe 11
     tags.toSet shouldBe Set(
       Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
-
       Tag(None, "whatup", Nil, TagPosition(2, 5)),
       Tag(None, "userName", Nil, TagPosition(3, 5)),
       Tag(None, "userName2", Nil, TagPosition(3, 15)),
       Tag(None, "Alias", Nil, TagPosition(4, 6)),
       Tag(None, "Decl", Nil, TagPosition(5, 6)),
-
       Tag(Some("SomeObject"), "whatup", Nil, TagPosition(2, 5)),
       Tag(Some("SomeObject"), "userName", Nil, TagPosition(3, 5)),
       Tag(Some("SomeObject"), "userName2", Nil, TagPosition(3, 15)),
@@ -127,13 +126,11 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     tags.size shouldBe 11
     tags.toSet shouldBe Set(
       Tag(None, "test", Nil, TagPosition(3, 15)),
-
       Tag(None, "whatup", Nil, TagPosition(4, 5)),
       Tag(None, "userName", Nil, TagPosition(5, 5)),
       Tag(None, "userName2", Nil, TagPosition(5, 15)),
       Tag(None, "Alias", Nil, TagPosition(6, 6)),
       Tag(None, "Decl", Nil, TagPosition(7, 6)),
-
       Tag(Some("test"), "whatup", Nil, TagPosition(4, 5)),
       Tag(Some("test"), "userName", Nil, TagPosition(5, 5)),
       Tag(Some("test"), "userName2", Nil, TagPosition(5, 15)),
@@ -142,4 +139,96 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
+  "Should capture modifiers just fine" in {
+    val testFile =
+      """
+      |package co.pjrt.ctags.test
+      |
+      |object SomeObject {
+      | private[test] object InnerObject {
+      |   private def privateHello(name: String) = name
+      |   def publicHello(name: String) = name
+      | }
+      |}
+      |sealed trait SealedTrait {
+      |  final def f(name: String) = name
+      |  protected[SomeObject] def protectedHello(name: String) = name
+      |}
+      """.stripMargin
+
+    val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+
+    import Mod._
+    import Name._
+    tags.size shouldBe 9
+    TestCompare(
+      tags,
+      List(
+        Tag(None, "SomeObject", Nil, TagPosition(3, 7)),
+        Tag(
+          None,
+          "InnerObject",
+          Seq(Private(Indeterminate("test"))),
+          TagPosition(4, 22)
+        ),
+        Tag(
+          None,
+          "privateHello",
+          Seq(Private(Anonymous())),
+          TagPosition(5, 15)
+        ),
+        Tag(
+          Some("InnerObject"),
+          "privateHello",
+          Seq(Private(Anonymous())),
+          TagPosition(5, 15)
+        ),
+        Tag(None, "publicHello", Nil, TagPosition(6, 7)),
+        Tag(Some("InnerObject"), "publicHello", Nil, TagPosition(6, 7)),
+        Tag(None, "SealedTrait", Seq(Sealed()), TagPosition(9, 13)),
+        Tag(None, "f", Seq(Final()), TagPosition(10, 12)),
+        Tag(
+          None,
+          "protectedHello",
+          Seq(Protected(Indeterminate("SomeObject"))),
+          TagPosition(11, 28)
+        )
+      )
+    ).test
+  }
+
 }
+
+case class TestCompare(actual: Seq[Tag], expected: Seq[Tag]) {
+
+  private def toMap(s: Seq[Tag]) =
+    mutable.Map(s.map(t => t.tagName -> (t.mods, t.pos)): _*)
+
+  private val mActual: mutable.Map[String, (Seq[Mod], TagPosition)] =
+    toMap(actual)
+
+  import Matchers._
+  def test = {
+
+    def testContent(t: (Seq[Mod], TagPosition), t2: Tag) = {
+      val expectedContent = (t2.mods.map(_.structure), t2.pos)
+      val actualContent = (t._1.map(_.structure), t._2)
+      if (expectedContent == actualContent) ()
+      else
+        fail(
+          s"Found tag `${t2.tagName}` but $actualContent /= $expectedContent"
+        )
+    }
+
+    expected.foreach { e =>
+      mActual
+        .get(e.tagName)
+        .map { c =>
+          testContent(c, e)
+        }
+        .getOrElse(fail(s"Did not find `${e.tagName}`"))
+    }
+  }
+}
+
+object TestCompare {}

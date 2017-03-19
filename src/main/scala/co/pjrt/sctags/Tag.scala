@@ -9,7 +9,7 @@ case class Tag(
     pos: TagPosition
 ) {
 
-  final val tokenName: String =
+  final val tagName: String =
     prefix.fold(basicName)(_ + "." + basicName)
 
   override def toString: String =
