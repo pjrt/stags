@@ -15,10 +15,10 @@ object TagGenerator {
 
     stat match {
       case obj: Pkg =>
-        // DESNOTE(2017-03-15, prodriguez) Pkg means a `package`. If a package
+        // DESNOTE(2017-03-15, pjrt) Pkg means a `package`. If a package
         // statement is found at the top, then that means EVERYTHING will be a
         // child of it.
-        obj.stats.flatMap(tagsForStatement(None, _))
+        obj.stats.flatMap(tagsForTopLevel)
       case obj: Defn.Object =>
         val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
         val childrenTags: Seq[Tag] =
@@ -33,7 +33,7 @@ object TagGenerator {
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
         selfTag +: childrenTags
-      // DESNOTE(2017-03-17, prodriguez) This repetition is gonna drive me
+      // DESNOTE(2017-03-17, pjrt) This repetition is gonna drive me
       // insane. There's GOT to be a better way.
       case obj: Defn.Trait =>
         val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
@@ -51,25 +51,26 @@ object TagGenerator {
     ): Seq[Tag] = {
 
     child match {
-      // DESNOTE(2017-03-15, prodriguez) There doesn't seem to be a way to
+      // DESNOTE(2017-03-15, pjrt) There doesn't seem to be a way to
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
-      case d: Defn.Def =>
-        tagsForTerm(lastParent, d.mods, d)
+      case d: Defn.Def => tagsForMember(lastParent, d.mods, d)
       case d: Defn.Val =>
         d.pats.flatMap {
-          case p: Pat.Var.Term => tagsForTerm(lastParent, d.mods, p)
+          // TODO:pjrt what about others?
+          case p: Pat.Var.Term => tagsForMember(lastParent, d.mods, p)
         }
-      case obj: Defn =>
-        tagsForTopLevel(obj)
+      case d: Defn.Type => tagsForMember(lastParent, d.mods, d)
+      case d: Decl.Type => tagsForMember(lastParent, d.mods, d)
+      case obj: Defn => tagsForTopLevel(obj)
     }
   }
 
-  private def tagsForTerm(
+  private def tagsForMember(
       lastParent: Option[Term.Name],
       mods: Seq[Mod],
-      term: Member.Term
+      term: Member
     ) = {
 
     val basicTag = Tag(None, term.name, mods, term.name.pos)
