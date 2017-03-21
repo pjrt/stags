@@ -13,7 +13,7 @@ case class Tag(
     prefix.fold(basicName)(_ + "." + basicName)
 
   override def toString: String =
-    s"Tag($prefix, $basicName, $mods, ${pos.line}, ${pos.col})"
+    s"Tag($tagName, $mods, ${pos.line}, ${pos.col})"
 }
 
 object Tag {

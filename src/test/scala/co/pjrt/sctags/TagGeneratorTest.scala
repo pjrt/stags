@@ -5,6 +5,8 @@ import scala.meta._
 
 import org.scalatest.{Assertion, FreeSpec, Matchers}
 
+import Utils._
+
 class TagGeneratorTest extends FreeSpec with Matchers {
 
   "Should generate unqualified tags for classes" in {
@@ -21,8 +23,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 4
-    tags.toSet shouldBe Set(
+    tags ~> List(
       Tag(None, "SomeClass", Nil, TagPosition(3, 6)),
       Tag(None, "hello", Nil, TagPosition(4, 5)),
       Tag(None, "Alias", Nil, TagPosition(5, 6)),
@@ -46,8 +47,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 7
-    tags.toSet shouldBe Set(
+    tags ~> List(
       Tag(None, "SomeTrait", Nil, TagPosition(3, 6)),
       Tag(None, "hello", Nil, TagPosition(4, 5)),
       Tag(None, "Alias", Nil, TagPosition(5, 6)),
@@ -71,8 +71,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 11
-    tags.toSet shouldBe Set(
+    tags ~> List(
       Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
       Tag(None, "whatup", Nil, TagPosition(2, 5)),
       Tag(None, "userName", Nil, TagPosition(3, 5)),
@@ -99,8 +98,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 4
-    tags.toSet shouldBe Set(
+    tags ~> List(
       Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
       Tag(None, "InnerObject", Nil, TagPosition(2, 8)),
       Tag(None, "hello", Nil, TagPosition(3, 7)),
@@ -123,8 +121,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    tags.size shouldBe 11
-    tags.toSet shouldBe Set(
+    tags ~> List(
       Tag(None, "test", Nil, TagPosition(3, 15)),
       Tag(None, "whatup", Nil, TagPosition(4, 5)),
       Tag(None, "userName", Nil, TagPosition(5, 5)),
@@ -160,9 +157,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     import Mod._
     import Name._
-    tags.size shouldBe 9
-    TestCompare(
-      tags,
+    tags ~>
       List(
         Tag(None, "SomeObject", Nil, TagPosition(3, 7)),
         Tag(
@@ -194,41 +189,5 @@ class TagGeneratorTest extends FreeSpec with Matchers {
           TagPosition(11, 28)
         )
       )
-    ).test
-  }
-
-}
-
-case class TestCompare(actual: Seq[Tag], expected: Seq[Tag]) {
-
-  private def toMap(s: Seq[Tag]) =
-    mutable.Map(s.map(t => t.tagName -> (t.mods, t.pos)): _*)
-
-  private val mActual: mutable.Map[String, (Seq[Mod], TagPosition)] =
-    toMap(actual)
-
-  import Matchers._
-  def test = {
-
-    def testContent(t: (Seq[Mod], TagPosition), t2: Tag) = {
-      val expectedContent = (t2.mods.map(_.structure), t2.pos)
-      val actualContent = (t._1.map(_.structure), t._2)
-      if (expectedContent == actualContent) ()
-      else
-        fail(
-          s"Found tag `${t2.tagName}` but $actualContent /= $expectedContent"
-        )
-    }
-
-    expected.foreach { e =>
-      mActual
-        .get(e.tagName)
-        .map { c =>
-          testContent(c, e)
-        }
-        .getOrElse(fail(s"Did not find `${e.tagName}`"))
-    }
   }
 }
-
-object TestCompare {}
