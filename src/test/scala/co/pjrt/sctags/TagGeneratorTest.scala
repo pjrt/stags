@@ -1,9 +1,8 @@
 package co.pjrt.sctags
 
-import scala.collection.mutable
 import scala.meta._
 
-import org.scalatest.{Assertion, FreeSpec, Matchers}
+import org.scalatest.{FreeSpec, Matchers}
 
 import Utils._
 

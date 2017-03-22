@@ -2,9 +2,7 @@ package co.pjrt.sctags
 
 import scala.meta._
 
-import org.scalatest.{Assertion, FreeSpec, Matchers}
-
-import Utils._
+import org.scalatest.{FreeSpec, Matchers}
 
 class TagTest extends FreeSpec with Matchers {
 

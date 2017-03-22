@@ -1,7 +1,6 @@
 package co.pjrt.sctags
 
 import scala.meta._
-import scala.meta.contrib._
 
 object TagGenerator {
 

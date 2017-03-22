@@ -2,14 +2,14 @@ package co.pjrt.sctags
 
 import scala.meta._
 
-import org.scalatest.{Assertion, Matchers}
+import org.scalatest.Matchers
 
 object Utils {
 
   import Matchers._
 
   private def toMap(s: Seq[Tag]) =
-    s.map(t => t.tagName -> (t.mods, t.row -> t.column)).toMap
+    s.map(t => t.tagName -> ((t.mods, t.row -> t.column))).toMap
 
   /**
    * Compare the two set of tags, while smartly displaying what went wrong
