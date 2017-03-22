@@ -24,10 +24,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeClass", Nil, TagPosition(3, 6)),
-      Tag(None, "hello", Nil, TagPosition(4, 5)),
-      Tag(None, "Alias", Nil, TagPosition(5, 6)),
-      Tag(None, "Undefined", Nil, TagPosition(6, 6))
+      Tag(None, "SomeClass", Nil, 3, 6),
+      Tag(None, "hello", Nil, 4, 5),
+      Tag(None, "Alias", Nil, 5, 6),
+      Tag(None, "Undefined", Nil, 6, 6)
     )
   }
 
@@ -48,13 +48,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeTrait", Nil, TagPosition(3, 6)),
-      Tag(None, "hello", Nil, TagPosition(4, 5)),
-      Tag(None, "Alias", Nil, TagPosition(5, 6)),
-      Tag(None, "Undefined", Nil, TagPosition(6, 6)),
-      Tag(None, "defined1", Nil, TagPosition(7, 5)),
-      Tag(None, "defined2", Nil, TagPosition(7, 15)),
-      Tag(None, "undefined", Nil, TagPosition(8, 5))
+      Tag(None, "SomeTrait", Nil, 3, 6),
+      Tag(None, "hello", Nil, 4, 5),
+      Tag(None, "Alias", Nil, 5, 6),
+      Tag(None, "Undefined", Nil, 6, 6),
+      Tag(None, "defined1", Nil, 7, 5),
+      Tag(None, "defined2", Nil, 7, 15),
+      Tag(None, "undefined", Nil, 8, 5)
     )
   }
 
@@ -72,17 +72,17 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
-      Tag(None, "whatup", Nil, TagPosition(2, 5)),
-      Tag(None, "userName", Nil, TagPosition(3, 5)),
-      Tag(None, "userName2", Nil, TagPosition(3, 15)),
-      Tag(None, "Alias", Nil, TagPosition(4, 6)),
-      Tag(None, "Decl", Nil, TagPosition(5, 6)),
-      Tag(Some("SomeObject"), "whatup", Nil, TagPosition(2, 5)),
-      Tag(Some("SomeObject"), "userName", Nil, TagPosition(3, 5)),
-      Tag(Some("SomeObject"), "userName2", Nil, TagPosition(3, 15)),
-      Tag(Some("SomeObject"), "Alias", Nil, TagPosition(4, 6)),
-      Tag(Some("SomeObject"), "Decl", Nil, TagPosition(5, 6))
+      Tag(None, "SomeObject", Nil, 1, 7),
+      Tag(None, "whatup", Nil, 2, 5),
+      Tag(None, "userName", Nil, 3, 5),
+      Tag(None, "userName2", Nil, 3, 15),
+      Tag(None, "Alias", Nil, 4, 6),
+      Tag(None, "Decl", Nil, 5, 6),
+      Tag(Some("SomeObject"), "whatup", Nil, 2, 5),
+      Tag(Some("SomeObject"), "userName", Nil, 3, 5),
+      Tag(Some("SomeObject"), "userName2", Nil, 3, 15),
+      Tag(Some("SomeObject"), "Alias", Nil, 4, 6),
+      Tag(Some("SomeObject"), "Decl", Nil, 5, 6)
     )
   }
 
@@ -99,10 +99,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeObject", Nil, TagPosition(1, 7)),
-      Tag(None, "InnerObject", Nil, TagPosition(2, 8)),
-      Tag(None, "hello", Nil, TagPosition(3, 7)),
-      Tag(Some("InnerObject"), "hello", Nil, TagPosition(3, 7))
+      Tag(None, "SomeObject", Nil, 1, 7),
+      Tag(None, "InnerObject", Nil, 2, 8),
+      Tag(None, "hello", Nil, 3, 7),
+      Tag(Some("InnerObject"), "hello", Nil, 3, 7)
     )
   }
 
@@ -122,17 +122,17 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "test", Nil, TagPosition(3, 15)),
-      Tag(None, "whatup", Nil, TagPosition(4, 5)),
-      Tag(None, "userName", Nil, TagPosition(5, 5)),
-      Tag(None, "userName2", Nil, TagPosition(5, 15)),
-      Tag(None, "Alias", Nil, TagPosition(6, 6)),
-      Tag(None, "Decl", Nil, TagPosition(7, 6)),
-      Tag(Some("test"), "whatup", Nil, TagPosition(4, 5)),
-      Tag(Some("test"), "userName", Nil, TagPosition(5, 5)),
-      Tag(Some("test"), "userName2", Nil, TagPosition(5, 15)),
-      Tag(Some("test"), "Alias", Nil, TagPosition(6, 6)),
-      Tag(Some("test"), "Decl", Nil, TagPosition(7, 6))
+      Tag(None, "test", Nil, 3, 15),
+      Tag(None, "whatup", Nil, 4, 5),
+      Tag(None, "userName", Nil, 5, 5),
+      Tag(None, "userName2", Nil, 5, 15),
+      Tag(None, "Alias", Nil, 6, 6),
+      Tag(None, "Decl", Nil, 7, 6),
+      Tag(Some("test"), "whatup", Nil, 4, 5),
+      Tag(Some("test"), "userName", Nil, 5, 5),
+      Tag(Some("test"), "userName2", Nil, 5, 15),
+      Tag(Some("test"), "Alias", Nil, 6, 6),
+      Tag(Some("test"), "Decl", Nil, 7, 6)
     )
   }
 
@@ -159,34 +159,34 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     import Name._
     tags ~>
       List(
-        Tag(None, "SomeObject", Nil, TagPosition(3, 7)),
+        Tag(None, "SomeObject", Nil, 3, 7),
         Tag(
           None,
           "InnerObject",
           Seq(Private(Indeterminate("test"))),
-          TagPosition(4, 22)
+          4, 22
         ),
         Tag(
           None,
           "privateHello",
           Seq(Private(Anonymous())),
-          TagPosition(5, 15)
+          5, 15
         ),
         Tag(
           Some("InnerObject"),
           "privateHello",
           Seq(Private(Anonymous())),
-          TagPosition(5, 15)
+          5, 15
         ),
-        Tag(None, "publicHello", Nil, TagPosition(6, 7)),
-        Tag(Some("InnerObject"), "publicHello", Nil, TagPosition(6, 7)),
-        Tag(None, "SealedTrait", Seq(Sealed()), TagPosition(9, 13)),
-        Tag(None, "f", Seq(Final()), TagPosition(10, 12)),
+        Tag(None, "publicHello", Nil, 6, 7),
+        Tag(Some("InnerObject"), "publicHello", Nil, 6, 7),
+        Tag(None, "SealedTrait", Seq(Sealed()), 9, 13),
+        Tag(None, "f", Seq(Final()), 10, 12),
         Tag(
           None,
           "protectedHello",
           Seq(Protected(Indeterminate("SomeObject"))),
-          TagPosition(11, 28)
+          11, 28
         )
       )
   }

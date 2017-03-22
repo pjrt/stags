@@ -2,17 +2,27 @@ package co.pjrt.sctags
 
 import scala.meta._
 
+/**
+ * A [[Tag]] contains all the information necessary to create a tag line from
+ * a token in the syntax tree
+ *
+ * It does not contain the filename since that's information that exists
+ * outside of the syntax tree.
+ */
 case class Tag(
     prefix: Option[String],
     basicName: String,
     mods: Seq[Mod],
-    pos: TagPosition) {
+    row: Int,
+    column: Int) {
 
   final val tagName: String =
     prefix.fold(basicName)(_ + "." + basicName)
 
+  lazy val pos: TagPosition = row -> column
+
   private final val tagAddress =
-    pos.line + "G" + pos.col + "|"
+    row + "G" + column + "|"
 
   private final val term = ";\""
   private final val tab = "\t"
@@ -67,7 +77,7 @@ case class Tag(
   }
 
   override def toString: String =
-    s"Tag($tagName, $mods, ${pos.line}, ${pos.col})"
+    s"Tag($tagName, $mods, $row, $column)"
 }
 
 object Tag {
@@ -83,7 +93,8 @@ object Tag {
       prefix.map(_.value),
       basicName.value,
       mods,
-      TagPosition.fromPosition(pos)
+      pos.start.line,
+      pos.start.column
     )
   }
 
@@ -94,7 +105,7 @@ object Tag {
       pos: Position
     ): Tag = {
 
-    Tag(prefix, basicName, mods, TagPosition.fromPosition(pos))
+    Tag(prefix, basicName, mods, pos.start.line, pos.start.column)
   }
 
   implicit val ordering: Ordering[Tag] =
@@ -112,11 +123,3 @@ sealed trait Visibility
 case object Private extends Visibility
 case object PrivateIsh extends Visibility
 case object Public extends Visibility
-
-case class TagPosition(line: Int, col: Int)
-
-object TagPosition {
-
-  def fromPosition(pos: Position): TagPosition =
-    TagPosition(pos.start.line, pos.start.column)
-}
