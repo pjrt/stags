@@ -21,13 +21,16 @@ class TagTest extends FreeSpec with Matchers {
       case Some(n) => Protected(Indeterminate(n))
     }
 
+  def call(row: Int, cul: Int) =
+    s"call cursor($row, $cul)"
+
   "Vim Tag line" - {
     "should produce a complete non-static tag line" in {
       val t = Tag(Some("Obj"), "tagName", false, 0, 1)
 
       val testFile = "TestFile.scala"
       t.vimTagLine(testFile) shouldBe
-        s"""Obj.tagName\t$testFile\t0G1|;"\tlanguage:scala"""
+        s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tlanguage:scala"""
     }
 
     "should produce a complete static tag line" in {
@@ -35,7 +38,7 @@ class TagTest extends FreeSpec with Matchers {
 
       val testFile = "TestFile.scala"
       t.vimTagLine(testFile) shouldBe
-        s"""Obj.tagName\t$testFile\t0G1|;"\tfile:$testFile\tlanguage:scala"""
+        s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tfile:\tlanguage:scala"""
     }
   }
 }

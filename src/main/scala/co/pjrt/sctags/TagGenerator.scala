@@ -1,5 +1,7 @@
 package co.pjrt.sctags
 
+import java.io.File
+
 import scala.meta._
 
 object TagGenerator {
@@ -9,6 +11,18 @@ object TagGenerator {
    */
   def generateTags(source: Source): Seq[Tag] =
     source.stats.flatMap(tagsForTopLevel(_))
+
+  def generateTagsForFile(file: File): Either[Parsed.Error, Seq[Tag]] =
+    file.parse[Source] match {
+      case Parsed.Success(s) => Right(generateTags(s))
+      case err: Parsed.Error => Left(err)
+
+    }
+
+  def generateTagsForFileName(
+      fileName: String
+    ): Either[Parsed.Error, Seq[Tag]] =
+    generateTagsForFile(new File(fileName))
 
   private def tagsForTopLevel(stat: Stat): Seq[Tag] = {
 
@@ -69,6 +83,8 @@ object TagGenerator {
           d.templ.stats
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
+
+      case _ => Seq.empty
     }
   }
 

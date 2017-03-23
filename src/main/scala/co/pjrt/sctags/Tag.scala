@@ -22,9 +22,9 @@ case class Tag(
   lazy val pos: TagPosition = row -> column
 
   private final val tagAddress =
-    row + "G" + column + "|"
+    s"call cursor(${row + 1}, ${column + 1})"
 
-  private final val term = ";\""
+  private final val term = "\""
   private final val tab = "\t"
 
   private def extras(fields: Seq[(String, String)]) =
@@ -37,7 +37,7 @@ case class Tag(
    */
   def vimTagLine(fileName: String): String = {
     val static =
-      if (isStatic) Seq(("file" -> fileName))
+      if (isStatic) Seq(("file" -> ""))
       else Seq.empty
 
     val langTag = "language" -> "scala"
@@ -85,5 +85,5 @@ object Tag {
   }
 
   implicit val ordering: Ordering[Tag] =
-    Ordering.by(_.tagName)
+    Ordering.by(_.tagName.toLowerCase)
 }

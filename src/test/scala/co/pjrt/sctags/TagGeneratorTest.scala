@@ -247,4 +247,21 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       )
     }
   }
+
+  "Should ignore import statements" in {
+    val testFileCase =
+      s"""
+      |import test._
+      |case class SomeClass() {
+      |
+      |   import test2._
+      |}
+    """.stripMargin
+
+    val caseTags = TagGenerator.generateTags(testFileCase.parse[Source].get)
+
+    caseTags ~> Seq(
+      Tag(None, "SomeClass", false, 2, 11)
+    )
+  }
 }
