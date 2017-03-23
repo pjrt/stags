@@ -23,10 +23,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeClass", Nil, 3, 6),
-      Tag(None, "hello", Nil, 4, 5),
-      Tag(None, "Alias", Nil, 5, 6),
-      Tag(None, "Undefined", Nil, 6, 6)
+      Tag(None, "SomeClass", false, 3, 6),
+      Tag(None, "hello", false, 4, 5),
+      Tag(None, "Alias", false, 5, 6),
+      Tag(None, "Undefined", false, 6, 6)
     )
   }
 
@@ -47,13 +47,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeTrait", Nil, 3, 6),
-      Tag(None, "hello", Nil, 4, 5),
-      Tag(None, "Alias", Nil, 5, 6),
-      Tag(None, "Undefined", Nil, 6, 6),
-      Tag(None, "defined1", Nil, 7, 5),
-      Tag(None, "defined2", Nil, 7, 15),
-      Tag(None, "undefined", Nil, 8, 5)
+      Tag(None, "SomeTrait", false, 3, 6),
+      Tag(None, "hello", false, 4, 5),
+      Tag(None, "Alias", false, 5, 6),
+      Tag(None, "Undefined", false, 6, 6),
+      Tag(None, "defined1", false, 7, 5),
+      Tag(None, "defined2", false, 7, 15),
+      Tag(None, "undefined", false, 8, 5)
     )
   }
 
@@ -71,17 +71,17 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeObject", Nil, 1, 7),
-      Tag(None, "whatup", Nil, 2, 5),
-      Tag(None, "userName", Nil, 3, 5),
-      Tag(None, "userName2", Nil, 3, 15),
-      Tag(None, "Alias", Nil, 4, 6),
-      Tag(None, "Decl", Nil, 5, 6),
-      Tag(Some("SomeObject"), "whatup", Nil, 2, 5),
-      Tag(Some("SomeObject"), "userName", Nil, 3, 5),
-      Tag(Some("SomeObject"), "userName2", Nil, 3, 15),
-      Tag(Some("SomeObject"), "Alias", Nil, 4, 6),
-      Tag(Some("SomeObject"), "Decl", Nil, 5, 6)
+      Tag(None, "SomeObject", false, 1, 7),
+      Tag(None, "whatup", false, 2, 5),
+      Tag(None, "userName", false, 3, 5),
+      Tag(None, "userName2", false, 3, 15),
+      Tag(None, "Alias", false, 4, 6),
+      Tag(None, "Decl", false, 5, 6),
+      Tag(Some("SomeObject"), "whatup", false, 2, 5),
+      Tag(Some("SomeObject"), "userName", false, 3, 5),
+      Tag(Some("SomeObject"), "userName2", false, 3, 15),
+      Tag(Some("SomeObject"), "Alias", false, 4, 6),
+      Tag(Some("SomeObject"), "Decl", false, 5, 6)
     )
   }
 
@@ -98,11 +98,11 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "SomeObject", Nil, 1, 7),
-      Tag(None, "InnerObject", Nil, 2, 8),
-      Tag(Some("SomeObject"), "InnerObject", Nil, 2, 8),
-      Tag(None, "hello", Nil, 3, 7),
-      Tag(Some("InnerObject"), "hello", Nil, 3, 7)
+      Tag(None, "SomeObject", false, 1, 7),
+      Tag(None, "InnerObject", false, 2, 8),
+      Tag(Some("SomeObject"), "InnerObject", false, 2, 8),
+      Tag(None, "hello", false, 3, 7),
+      Tag(Some("InnerObject"), "hello", false, 3, 7)
     )
   }
 
@@ -122,17 +122,17 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      Tag(None, "test", Nil, 3, 15),
-      Tag(None, "whatup", Nil, 4, 5),
-      Tag(None, "userName", Nil, 5, 5),
-      Tag(None, "userName2", Nil, 5, 15),
-      Tag(None, "Alias", Nil, 6, 6),
-      Tag(None, "Decl", Nil, 7, 6),
-      Tag(Some("test"), "whatup", Nil, 4, 5),
-      Tag(Some("test"), "userName", Nil, 5, 5),
-      Tag(Some("test"), "userName2", Nil, 5, 15),
-      Tag(Some("test"), "Alias", Nil, 6, 6),
-      Tag(Some("test"), "Decl", Nil, 7, 6)
+      Tag(None, "test", false, 3, 15),
+      Tag(None, "whatup", false, 4, 5),
+      Tag(None, "userName", false, 5, 5),
+      Tag(None, "userName2", false, 5, 15),
+      Tag(None, "Alias", false, 6, 6),
+      Tag(None, "Decl", false, 7, 6),
+      Tag(Some("test"), "whatup", false, 4, 5),
+      Tag(Some("test"), "userName", false, 5, 5),
+      Tag(Some("test"), "userName2", false, 5, 15),
+      Tag(Some("test"), "Alias", false, 6, 6),
+      Tag(Some("test"), "Decl", false, 7, 6)
     )
   }
 
@@ -149,50 +149,53 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |}
       |sealed trait SealedTrait {
       |  final def f(name: String) = name
-      |  protected[SomeObject] def protectedHello(name: String) = name
+      |  protected[test] def protectedHello(name: String) = name
       |}
       """.stripMargin
 
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
-    import Mod._
-    import Name._
     tags ~>
       List(
-        Tag(None, "SomeObject", Nil, 3, 7),
+        Tag(None, "SomeObject", false, 3, 7),
         Tag(
           None,
           "InnerObject",
-          Seq(Private(Indeterminate("test"))),
-          4, 22
+          false,
+          4,
+          22
         ),
         Tag(
           Some("SomeObject"),
           "InnerObject",
-          Seq(Private(Indeterminate("test"))),
-          4, 22
+          false,
+          4,
+          22
         ),
         Tag(
           None,
           "privateHello",
-          Seq(Private(Anonymous())),
-          5, 15
+          true,
+          5,
+          15
         ),
         Tag(
           Some("InnerObject"),
           "privateHello",
-          Seq(Private(Anonymous())),
-          5, 15
+          true,
+          5,
+          15
         ),
-        Tag(None, "publicHello", Nil, 6, 7),
-        Tag(Some("InnerObject"), "publicHello", Nil, 6, 7),
-        Tag(None, "SealedTrait", Seq(Sealed()), 9, 13),
-        Tag(None, "f", Seq(Final()), 10, 12),
+        Tag(None, "publicHello", false, 6, 7),
+        Tag(Some("InnerObject"), "publicHello", false, 6, 7),
+        Tag(None, "SealedTrait", false, 9, 13),
+        Tag(None, "f", false, 10, 12),
         Tag(
           None,
           "protectedHello",
-          Seq(Protected(Indeterminate("SomeObject"))),
-          11, 28
+          false,
+          11,
+          22
         )
       )
   }

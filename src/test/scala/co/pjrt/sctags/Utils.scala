@@ -1,7 +1,5 @@
 package co.pjrt.sctags
 
-import scala.meta._
-
 import org.scalatest.Matchers
 
 object Utils {
@@ -9,7 +7,7 @@ object Utils {
   import Matchers._
 
   private def toMap(s: Seq[Tag]) =
-    s.map(t => t.tagName -> ((t.mods, t.row -> t.column))).toMap
+    s.map(t => t.tagName -> ((t.isStatic, t.row -> t.column))).toMap
 
   /**
    * Compare the two set of tags, while smartly displaying what went wrong
@@ -23,12 +21,12 @@ object Utils {
     else if (aSize < eSize)
       fail(s"Got less tags than expected $aSize < $eSize")
     else ()
-    val mActual: Map[String, (Seq[Mod], TagPosition)] =
+    val mActual: Map[String, (Boolean, TagPosition)] =
       toMap(actual)
 
-    def testContent(t: (Seq[Mod], TagPosition), t2: Tag) = {
-      val expectedContent = (t2.mods.map(_.structure), t2.pos)
-      val actualContent = (t._1.map(_.structure), t._2)
+    def testContent(t: (Boolean, TagPosition), t2: Tag) = {
+      val expectedContent = (t2.isStatic, t2.pos)
+      val actualContent = (t._1, t._2)
       if (expectedContent == actualContent) ()
       else
         fail(
