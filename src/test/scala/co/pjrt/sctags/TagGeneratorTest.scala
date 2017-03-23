@@ -13,7 +13,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """
       |package co.pjrt.sctags.test
       |
-      |class SomeClass {
+      |class SomeClass() {
       | def hello(name: String) = name
       | type Alias = String
       | type Undefined
