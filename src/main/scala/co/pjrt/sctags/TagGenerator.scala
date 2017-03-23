@@ -65,6 +65,7 @@ object TagGenerator {
             .getOrElse(Nil)
       case d: Defn.Class =>
         tagsForMember(lastParent, d.mods, d) ++
+          tagsForCtorParams(d.isCaseClass, d.ctor.paramss) ++
           d.templ.stats
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
@@ -77,9 +78,57 @@ object TagGenerator {
       term: Member
     ) = {
 
-    val basicTag = Tag(None, term.name, mods, term.name.pos)
+    val static = isStatic(lastParent.map(_.value), mods)
+    val basicTag = Tag(None, term.name, static, term.name.pos)
     basicTag +: lastParent
-      .map(l => Tag(Some(l), term.name, mods, term.name.pos))
+      .map(l => Tag(Some(l), term.name, static, term.name.pos))
       .toSeq
   }
+
+  // When generating tags for Ctors of classes we need to see if it is a case
+  // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
+  // NOT static. Other params are still static.
+  private def tagsForCtorParams(
+      isCase: Boolean,
+      paramss: Seq[Seq[Term.Param]]
+    ) = {
+    paramss match {
+      case first +: rem =>
+        val firstIsStatic: Term.Param => Boolean = p =>
+          if (isCase) isStatic(None, p.mods) else isStaticCtorParam(p)
+        first.map(p => Tag(None, p.name, firstIsStatic(p), p.name.pos)) ++
+          (for {
+            pGroup <- rem
+            param <- pGroup
+          } yield {
+            Tag(
+              None,
+              param.name.value,
+              isStaticCtorParam(param),
+              param.name.pos
+            )
+          })
+      case Seq() => Nil
+    }
+  }
+
+  private def isStaticCtorParam(param: Term.Param) =
+    param.mods.isEmpty || isStatic(None, param.mods)
+
+  private def isStatic(prefix: Option[String], mods: Seq[Mod]): Boolean =
+    mods
+      .collect {
+        case Mod.Private(Name.Anonymous()) => true
+        case Mod.Private(Name.Indeterminate(name)) =>
+          // DESNOTE(2017-03-21, prodriguez): If the name of the private thing
+          // is the parent object, then it is just private.
+          if (prefix.contains(name))
+            true
+          else
+            false
+        case Mod.ValParam() => false
+        case Mod.VarParam() => false
+      }
+      .headOption
+      .getOrElse(false)
 }

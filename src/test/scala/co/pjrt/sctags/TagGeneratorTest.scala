@@ -136,7 +136,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Should capture modifiers just fine" in {
+  "Should capture modifiers and generate the correct isStatic" in {
     val testFile =
       """
       |package co.pjrt.ctags.test
@@ -198,5 +198,53 @@ class TagGeneratorTest extends FreeSpec with Matchers {
           22
         )
       )
+  }
+
+  "Should generate tags for Ctor params" - {
+    "for classes" in {
+      val testFileClass =
+        s"""
+        |class SomeClass(
+        |   name: String,
+        |   val number: Int,
+        |   private val age: Int
+        |)
+        """.stripMargin
+
+      val classTags =
+        TagGenerator.generateTags(testFileClass.parse[Source].get)
+
+      classTags ~> Seq(
+        Tag(None, "SomeClass", false, 1, 6),
+        Tag(None, "name", true, 2, 3),
+        Tag(None, "number", false, 3, 7),
+        Tag(None, "age", true, 4, 15)
+      )
+    }
+
+    "for case classes" in {
+      val testFileCase =
+        s"""
+        |case class SomeClass(
+        |   name: String,
+        |   val number: Int,
+        |   private val age: Int,
+        |   override val address: String
+        |)( ctx: Context,
+        |   val ex: Executor)
+      """.stripMargin
+
+      val caseTags = TagGenerator.generateTags(testFileCase.parse[Source].get)
+
+      caseTags ~> Seq(
+        Tag(None, "SomeClass", false, 1, 11),
+        Tag(None, "name", false, 2, 3),
+        Tag(None, "number", false, 3, 7),
+        Tag(None, "age", true, 4, 15),
+        Tag(None, "address", false, 5, 16),
+        Tag(None, "ctx", true, 6, 3),
+        Tag(None, "ex", false, 7, 7)
+      )
+    }
   }
 }

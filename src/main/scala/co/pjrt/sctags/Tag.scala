@@ -51,25 +51,10 @@ case class Tag(
 
 object Tag {
 
-  private def isStatic(prefix: Option[String], mods: Seq[Mod]): Boolean =
-    mods
-      .collect {
-        case Mod.Private(Name.Anonymous()) => true
-        case Mod.Private(Name.Indeterminate(name)) =>
-          // DESNOTE(2017-03-21, prodriguez): If the name of the private thing
-          // is the parent object, then it is just private.
-          if (prefix.contains(name))
-            true
-          else
-            false
-      }
-      .headOption
-      .getOrElse(false)
-
   def apply(
       prefix: Option[Name],
       basicName: Name,
-      mods: Seq[Mod],
+      isStatic: Boolean,
       pos: Position
     ): Tag = {
 
@@ -77,7 +62,7 @@ object Tag {
     Tag(
       prefix2,
       basicName.value,
-      isStatic(prefix2, mods),
+      isStatic,
       pos.start.line,
       pos.start.column
     )
@@ -86,14 +71,14 @@ object Tag {
   def apply(
       prefix: Option[String],
       basicName: String,
-      mods: Seq[Mod],
+      isStatic: Boolean,
       pos: Position
     ): Tag = {
 
     Tag(
       prefix,
       basicName,
-      isStatic(prefix, mods),
+      isStatic,
       pos.start.line,
       pos.start.column
     )
