@@ -46,7 +46,7 @@ object Utils {
     }
   }
 
-  implicit class SeqOfTagsOps(actual: Seq[Tag]) {
+  implicit class SeqOfTagsOps(val actual: Seq[Tag]) extends AnyVal {
 
     def ~>(expected: Seq[Tag]): Unit =
       compareTags(actual, expected)

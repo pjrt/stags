@@ -100,6 +100,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     tags ~> List(
       Tag(None, "SomeObject", Nil, 1, 7),
       Tag(None, "InnerObject", Nil, 2, 8),
+      Tag(Some("SomeObject"), "InnerObject", Nil, 2, 8),
       Tag(None, "hello", Nil, 3, 7),
       Tag(Some("InnerObject"), "hello", Nil, 3, 7)
     )
@@ -161,6 +162,12 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         Tag(None, "SomeObject", Nil, 3, 7),
         Tag(
           None,
+          "InnerObject",
+          Seq(Private(Indeterminate("test"))),
+          4, 22
+        ),
+        Tag(
+          Some("SomeObject"),
           "InnerObject",
           Seq(Private(Indeterminate("test"))),
           4, 22

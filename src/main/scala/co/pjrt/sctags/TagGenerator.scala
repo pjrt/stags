@@ -18,36 +18,8 @@ object TagGenerator {
         // statement is found at the top, then that means EVERYTHING will be a
         // child of it.
         obj.stats.flatMap(tagsForTopLevel)
-      case obj: Defn.Object =>
-        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
-        val childrenTags: Seq[Tag] =
-          obj.templ.stats
-            .map(_.flatMap(tagsForStatement(Some(obj.name), _)))
-            .getOrElse(Nil)
-        selfTag +: childrenTags
-      case obj: Pkg.Object =>
-        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
-        val childrenTags: Seq[Tag] =
-          obj.templ.stats
-            .map(_.flatMap(tagsForStatement(Some(obj.name), _)))
-            .getOrElse(Nil)
-        selfTag +: childrenTags
-      case obj: Defn.Class =>
-        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
-        val childrenTags: Seq[Tag] =
-          obj.templ.stats
-            .map(_.flatMap(tagsForStatement(None, _)))
-            .getOrElse(Nil)
-        selfTag +: childrenTags
-      // DESNOTE(2017-03-17, pjrt) This repetition is gonna drive me
-      // insane. There's GOT to be a better way.
-      case obj: Defn.Trait =>
-        val selfTag = Tag(None, obj.name, obj.mods, obj.name.pos)
-        val childrenTags: Seq[Tag] =
-          obj.templ.stats
-            .map(_.flatMap(tagsForStatement(None, _)))
-            .getOrElse(Nil)
-        selfTag +: childrenTags
+      case st =>
+        tagsForStatement(None, st)
     }
   }
 
@@ -74,7 +46,28 @@ object TagGenerator {
         }
       case d: Defn.Type => tagsForMember(lastParent, d.mods, d)
       case d: Decl.Type => tagsForMember(lastParent, d.mods, d)
-      case obj: Defn => tagsForTopLevel(obj)
+
+      case d: Defn.Object =>
+        tagsForMember(lastParent, d.mods, d) ++
+          d.templ.stats
+            .map(_.flatMap(tagsForStatement(Some(d.name), _)))
+            .getOrElse(Nil)
+      case d: Pkg.Object =>
+        tagsForMember(lastParent, d.mods, d) ++
+          d.templ.stats
+            .map(_.flatMap(tagsForStatement(Some(d.name), _)))
+            .getOrElse(Nil)
+
+      case d: Defn.Trait =>
+        tagsForMember(lastParent, d.mods, d) ++
+          d.templ.stats
+            .map(_.flatMap(tagsForStatement(None, _)))
+            .getOrElse(Nil)
+      case d: Defn.Class =>
+        tagsForMember(lastParent, d.mods, d) ++
+          d.templ.stats
+            .map(_.flatMap(tagsForStatement(None, _)))
+            .getOrElse(Nil)
     }
   }
 
