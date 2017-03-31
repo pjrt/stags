@@ -11,13 +11,13 @@ import scala.meta._
  */
 case class Tag(
     prefix: Option[String],
-    basicName: String,
+    tokenName: String,
     isStatic: Boolean,
     row: Int,
     column: Int) {
 
   final val tagName: String =
-    prefix.fold(basicName)(_ + "." + basicName)
+    prefix.fold(tokenName)(_ + "." + tokenName)
 
   lazy val pos: TagPosition = row -> column
 
@@ -53,7 +53,7 @@ object Tag {
 
   def apply(
       prefix: Option[Name],
-      basicName: Name,
+      tokenName: Name,
       isStatic: Boolean,
       pos: Position
     ): Tag = {
@@ -61,7 +61,7 @@ object Tag {
     val prefix2 = prefix.map(_.value)
     Tag(
       prefix2,
-      basicName.value,
+      tokenName.value,
       isStatic,
       pos.start.line,
       pos.start.column
@@ -70,14 +70,14 @@ object Tag {
 
   def apply(
       prefix: Option[String],
-      basicName: String,
+      tokenName: String,
       isStatic: Boolean,
       pos: Position
     ): Tag = {
 
     Tag(
       prefix,
-      basicName,
+      tokenName,
       isStatic,
       pos.start.line,
       pos.start.column
