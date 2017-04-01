@@ -65,6 +65,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | val userName, userName2 = "hello"
       | type Alias = Int
       | type Decl <: SomeUpper
+      | val (tUserName, tUserName2: String) = ("hello1", "hello2")
       |}
       """.stripMargin
 
@@ -77,11 +78,15 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       Tag(None, "userName2", false, 3, 15),
       Tag(None, "Alias", false, 4, 6),
       Tag(None, "Decl", false, 5, 6),
+      Tag(None, "tUserName", false, 6, 6),
+      Tag(None, "tUserName2", false, 6, 17),
       Tag(Some("SomeObject"), "whatup", false, 2, 5),
       Tag(Some("SomeObject"), "userName", false, 3, 5),
       Tag(Some("SomeObject"), "userName2", false, 3, 15),
       Tag(Some("SomeObject"), "Alias", false, 4, 6),
-      Tag(Some("SomeObject"), "Decl", false, 5, 6)
+      Tag(Some("SomeObject"), "Decl", false, 5, 6),
+      Tag(Some("SomeObject"), "tUserName", false, 6, 6),
+      Tag(Some("SomeObject"), "tUserName2", false, 6, 17)
     )
   }
 

@@ -51,10 +51,7 @@ object TagGenerator {
       // it looks like there should be a way.
       case d: Defn.Def => tagsForMember(lastParent, d.mods, d)
       case d: Defn.Val =>
-        d.pats.flatMap {
-          // TODO:pjrt what about others?
-          case p: Pat.Var.Term => tagsForMember(lastParent, d.mods, p)
-        }
+        d.pats.flatMap(getFromPats(lastParent, d.mods, _))
       case d: Decl.Val =>
         d.pats.flatMap {
           // TODO:pjrt what about others?
@@ -89,6 +86,13 @@ object TagGenerator {
       case _ => Seq.empty
     }
   }
+
+  private def getFromPats(lastParent: Option[Term.Name], mods: Seq[Mod], pat: Pat): Seq[Tag] =
+    pat match {
+      case p: Pat.Var.Term => tagsForMember(lastParent, mods, p)
+      case Pat.Typed(p, _) => getFromPats(lastParent, mods, p)
+      case Pat.Tuple(args) => args.flatMap(getFromPats(lastParent, mods, _))
+    }
 
   private def tagsForMember(
       lastParent: Option[Term.Name],
