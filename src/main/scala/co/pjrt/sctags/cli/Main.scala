@@ -3,9 +3,8 @@ package co.pjrt.sctags.cli
 import java.io.{File, PrintWriter}
 
 import scala.meta.Parsed
-import scala.util.Sorting
 
-import co.pjrt.sctags.{Config, TagGenerator}
+import co.pjrt.sctags.{Config, TagGenerator, TagLine}
 
 object Main {
 
@@ -22,17 +21,16 @@ object Main {
       else
         fetchFilesFromDir(file)
     }
-    val tags: Seq[String] =
+    val tags: Seq[TagLine] =
       files.flatMap(
         f =>
           TagGenerator
             .generateTagsForFile(f)
             .fold((e: Parsed.Error) => throw e.details, identity)
-            .map(_.vimTagLine(f.getPath))
       )
 
-    val sortedTags = Sorting.stableSort(tags)
-    writeFile("tags", sortedTags)
+    val sortedTags = TagLine.foldCaseSorting(tags)
+    writeFile("tags", sortedTags.map(_.vimTagLine))
   }
 
   private def fetchFilesFromDir(dir: File): Seq[File] =

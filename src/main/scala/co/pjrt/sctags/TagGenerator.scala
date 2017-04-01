@@ -12,16 +12,18 @@ object TagGenerator {
   def generateTags(source: Source): Seq[Tag] =
     source.stats.flatMap(tagsForTopLevel(_))
 
-  def generateTagsForFile(file: File): Either[Parsed.Error, Seq[Tag]] =
+  def generateTagsForFile(file: File): Either[Parsed.Error, Seq[TagLine]] =
     file.parse[Source] match {
-      case Parsed.Success(s) => Right(generateTags(s))
-      case err: Parsed.Error => Left(err)
+      case Parsed.Success(s) =>
+        Right(generateTags(s).map(TagLine(_, file.getPath)))
+      case err: Parsed.Error =>
+        Left(err)
 
     }
 
   def generateTagsForFileName(
       fileName: String
-    ): Either[Parsed.Error, Seq[Tag]] =
+    ): Either[Parsed.Error, Seq[TagLine]] =
     generateTagsForFile(new File(fileName))
 
   private def tagsForTopLevel(stat: Stat): Seq[Tag] = {

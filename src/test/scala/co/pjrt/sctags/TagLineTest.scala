@@ -4,7 +4,7 @@ import scala.meta._
 
 import org.scalatest.{FreeSpec, Matchers}
 
-class TagTest extends FreeSpec with Matchers {
+class TagLineTest extends FreeSpec with Matchers {
 
   import Mod._
   import Name._
@@ -29,7 +29,7 @@ class TagTest extends FreeSpec with Matchers {
       val t = Tag(Some("Obj"), "tagName", false, 0, 1)
 
       val testFile = "TestFile.scala"
-      t.vimTagLine(testFile) shouldBe
+      TagLine(t, testFile).vimTagLine shouldBe
         s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tlanguage:scala"""
     }
 
@@ -37,7 +37,7 @@ class TagTest extends FreeSpec with Matchers {
       val t = Tag(Some("Obj"), "tagName", true, 0, 1)
 
       val testFile = "TestFile.scala"
-      t.vimTagLine(testFile) shouldBe
+      TagLine(t, testFile).vimTagLine shouldBe
         s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tfile:\tlanguage:scala"""
     }
   }

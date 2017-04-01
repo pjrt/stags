@@ -1,6 +1,7 @@
 package co.pjrt.sctags
 
 import scala.meta._
+import scala.util.Sorting
 
 /**
  * A [[Tag]] contains all the information necessary to create a tag line from
@@ -9,7 +10,7 @@ import scala.meta._
  * It does not contain the filename since that's information that exists
  * outside of the syntax tree.
  */
-case class Tag(
+final case class Tag(
     prefix: Option[String],
     tokenName: String,
     isStatic: Boolean,
@@ -21,29 +22,9 @@ case class Tag(
 
   lazy val pos: TagPosition = row -> column
 
-  private final val tagAddress =
+  final val tagAddress =
     s"call cursor(${row + 1}, ${column + 1})"
 
-  private final val term = "\""
-  private final val tab = "\t"
-
-  private def extras(fields: Seq[(String, String)]) =
-    term + tab + fields.map(t => t._1 + ":" + t._2).mkString(tab)
-
-  /**
-   * Given a [[Tag]] and a file name, create a vim tag line
-   *
-   * See http://vimdoc.sourceforge.net/htmldoc/tagsrch.html#tags-file-format
-   */
-  def vimTagLine(fileName: String): String = {
-    val static =
-      if (isStatic) Seq(("file" -> ""))
-      else Seq.empty
-
-    val langTag = "language" -> "scala"
-    val fields = static :+ langTag
-    List(tagName, fileName, tagAddress).mkString(tab) + extras(fields)
-  }
 
   override def toString: String =
     s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $row, $column)"
@@ -86,4 +67,46 @@ object Tag {
 
   implicit val ordering: Ordering[Tag] =
     Ordering.by(_.tagName.toLowerCase)
+}
+
+final case class TagLine(tag: Tag, fileName: String) {
+
+  import tag._
+
+  private final val term = "\""
+  private final val tab = "\t"
+
+  private def extras(fields: Seq[(String, String)]) =
+    term + tab + fields.map(t => t._1 + ":" + t._2).mkString(tab)
+
+  /**
+   * Given a [[Tag]] and a file name, create a vim tag line
+   *
+   * See http://vimdoc.sourceforge.net/htmldoc/tagsrch.html#tags-file-format
+   */
+  final val vimTagLine: String = {
+    val static =
+      if (isStatic) Seq(("file" -> ""))
+      else Seq.empty
+
+    val langTag = "language" -> "scala"
+    val fields = static :+ langTag
+    List(tagName, fileName, tagAddress).mkString(tab) + extras(fields)
+  }
+}
+
+object TagLine {
+
+  final def foldCaseSorting(tags: Seq[TagLine]): Seq[TagLine] = {
+    implicit val sorting: Ordering[TagLine] =
+      Ordering.by(_.tag.tagName.toLowerCase)
+
+    Sorting.stableSort(tags)
+  }
+
+  final def asciiSorting(tags: Seq[TagLine]): Seq[TagLine] = {
+    implicit val sorting: Ordering[TagLine] = Ordering.by(_.tag.tagName)
+
+    Sorting.stableSort(tags)
+  }
 }
