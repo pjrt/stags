@@ -15,12 +15,7 @@ object Main {
     Config.parse(args).fold(())(run)
 
   private def run(config: Config): Unit = {
-    val files = config.files.flatMap { file =>
-      if (!file.isDirectory)
-        Seq(file)
-      else
-        fetchFilesFromDir(file)
-    }
+    val files = config.files.flatMap(fetchScalaFiles)
     val tags: Seq[TagLine] =
       files.flatMap(
         f =>
@@ -33,13 +28,22 @@ object Main {
     writeFile("tags", sortedTags.map(_.vimTagLine))
   }
 
+  private def isScalaFile(file: File) =
+    file.getName.endsWith(".scala")
+
+  private def fetchScalaFiles(file: File) = {
+    if (!file.isDirectory)
+      if (isScalaFile(file)) Seq(file)
+      else Seq.empty
+    else
+      fetchFilesFromDir(file)
+  }
+
   private def fetchFilesFromDir(dir: File): Seq[File] =
     dir.listFiles.foldLeft(Seq.empty[File]) {
-      case (acc, f) =>
-        if (f.isDirectory)
-          acc ++ fetchFilesFromDir(f)
-        else
-          acc :+ f
+      case (acc, f) if (f.isDirectory) => acc ++ fetchFilesFromDir(f)
+      case (acc, f) if isScalaFile(f) => acc :+ f
+      case (acc, _) => acc
     }
 
   private def writeFile(name: String, lines: Seq[String]): Unit = {
@@ -47,7 +51,7 @@ object Main {
     val pw = new PrintWriter(new File(name))
     val header =
       Seq(
-        "!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/",
+        "!_TAG_FILE_SORTED	2	/0=unsorted, 1=sorted, 2=foldcase/",
         "!_TAG_PROGRAM_AUTHOR	pedro@pjrt.co	//",
         "!_TAG_PROGRAM_NAME	stags",
         "!_TAG_PROGRAM_URL	https://github/pjrt/stags	/official site/",
