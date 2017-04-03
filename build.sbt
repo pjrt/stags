@@ -1,9 +1,16 @@
+import java.nio.file.{Files, Paths}
+import java.nio.file.attribute.{PosixFilePermission => Perm}
+
+import scala.collection.JavaConverters._
+
 import sbtassembly.AssemblyPlugin.defaultShellScript
 
+lazy val install = taskKey[Unit]("install")
 
 lazy val cli =
   (project in file("."))
     .settings(
+      version := "0.1-SNAPSHOT",
       scalaVersion := "2.12.1",
 
       scalacOptions ++= Seq(
@@ -30,6 +37,31 @@ lazy val cli =
         "org.scalatest" %% "scalatest" % "3.0.1"
       ),
     mainClass in assembly := Some("co.pjrt.sctags.cli.Main"),
-    assemblyJarName in assembly := s"stags-${version.value}"
+    assemblyJarName in assembly := s"stags-${version.value}",
+    install := {
+      assembly.value
+      val jar = (assemblyOutputPath in assembly).value
+      val target = new File(userHome + "/.local/lib/" + (assemblyJarName in assembly).value)
+      val shFilePath = userHome + "/.local/bin/stags"
+      IO.copyFile(jar, target)
+      IO.write(new File(shFilePath), shFileContent.value.getBytes)
+      val perms =
+        Set(
+          Perm.OWNER_EXECUTE,
+          Perm.OWNER_READ,
+          Perm.OWNER_WRITE,
+          Perm.GROUP_READ,
+          Perm.OTHERS_READ
+        ).asJava
+      Files.setPosixFilePermissions(Paths.get(shFilePath), perms)
+    }
   )
+
+lazy val userHome: String = System.getProperty("user.home")
+
+lazy val shFileContent = Def.task {
+  s"""#!/bin/sh
+  |java -jar $userHome/.local/lib/${(assemblyJarName in assembly).value} $$@
+  """.stripMargin
+}
 
