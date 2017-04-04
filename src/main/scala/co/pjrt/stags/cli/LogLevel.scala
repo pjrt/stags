@@ -3,7 +3,8 @@ package co.pjrt.stags.cli
 // Stolen from Scalafmt
 // https://github.com/scalameta/scalafmt/blob/master/core/src/main/scala/org/scalafmt/util/LogLevel.scala
 sealed abstract class LogLevel(color: String)(implicit name: sourcecode.Name) {
-override def toString: String = s"[$color${name.value}${Console.RESET}]" }
+  override def toString: String = s"[$color${name.value}${Console.RESET}]"
+}
 
 object LogLevel {
   case object trace extends LogLevel(Console.RESET)

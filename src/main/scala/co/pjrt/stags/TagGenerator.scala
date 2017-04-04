@@ -87,12 +87,21 @@ object TagGenerator {
     }
   }
 
-  private def getFromPats(lastParent: Option[Term.Name], mods: Seq[Mod], pat: Pat): Seq[Tag] =
+  private def getFromPats(
+      lastParent: Option[Term.Name],
+      mods: Seq[Mod],
+      pat: Pat.Arg
+    ): Seq[Tag] = {
+
+    def getFromPat(p: Pat.Arg) = getFromPats(lastParent, mods, p)
     pat match {
       case p: Pat.Var.Term => tagsForMember(lastParent, mods, p)
-      case Pat.Typed(p, _) => getFromPats(lastParent, mods, p)
-      case Pat.Tuple(args) => args.flatMap(getFromPats(lastParent, mods, _))
+      case Pat.Typed(p, _) => getFromPat(p)
+      case Pat.Tuple(args) => args.flatMap(getFromPat)
+      case Pat.ExtractInfix(lhs, _, pats) =>
+        getFromPat(lhs) ++ pats.flatMap(getFromPat)
     }
+  }
 
   private def tagsForMember(
       lastParent: Option[Term.Name],

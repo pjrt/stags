@@ -269,4 +269,26 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       Tag(None, "SomeClass", false, 2, 11)
     )
   }
+
+  "Odd cases" - {
+    "infix extraction" in {
+      val testFile =
+        s"""
+        |object Odd {
+        | val (d41: Token) +: (d42: Seq[Token]) :+ (d43: Token) = d
+        }
+        """.stripMargin
+
+      val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+      tags ~> Seq(
+        Tag(None, "Odd", false, 1, 7),
+        Tag(None, "d41", false, 2, 6),
+        Tag(None, "d42", false, 2, 22),
+        Tag(None, "d43", false, 2, 43),
+        Tag(Some("Odd"), "d41", false, 2, 6),
+        Tag(Some("Odd"), "d42", false, 2, 22),
+        Tag(Some("Odd"), "d43", false, 2, 43)
+      )
+    }
+  }
 }

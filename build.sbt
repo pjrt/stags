@@ -12,7 +12,6 @@ lazy val cli =
     .settings(
       version := "0.1-SNAPSHOT",
       scalaVersion := "2.12.1",
-
       scalacOptions ++= scalacOps,
       scalacOptions in (Compile, console) ~=
         (_.filterNot(_ == "-Ywarn-unused-import")),
@@ -27,7 +26,9 @@ lazy val cli =
       install := {
         assembly.value
         val jar = (assemblyOutputPath in assembly).value
-        val target = new File(userHome + "/.local/lib/" + (assemblyJarName in assembly).value)
+        val target = new File(
+          userHome + "/.local/lib/" + (assemblyJarName in assembly).value
+        )
         val shFilePath = userHome + "/.local/bin/stags"
         IO.copyFile(jar, target)
         IO.write(new File(shFilePath), shFileContent.value.getBytes)

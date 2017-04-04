@@ -27,7 +27,6 @@ final case class Tag(
   final val tagAddress =
     s"call cursor(${row + 1}, ${column + 1})"
 
-
   override def toString: String =
     s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $row, $column)"
 }
