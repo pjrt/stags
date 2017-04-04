@@ -1,6 +1,6 @@
 package co.pjrt.stags.cli
 
-import java.io.{File, PrintWriter}
+import java.io.{File, PrintStream, PrintWriter}
 import java.nio.file.Paths
 
 import scala.meta.Parsed
@@ -12,8 +12,16 @@ object Main {
   def main(args: Array[String]): Unit =
     Config.parse(args).fold(())(run)
 
+  private lazy val err: PrintStream = System.err
+
   private final val pwd =
     Paths.get(System.getProperty("user.dir"))
+
+  private def warn(file: File, msg: String): Unit = {
+
+    val warnMsg = s"${LogLevel.warn} Error in ${file.getPath}: $msg"
+    err.println(warnMsg)
+  }
 
   private def run(config: Config): Unit = {
     val files = config.files.flatMap(fetchScalaFiles)
@@ -26,7 +34,10 @@ object Main {
         f =>
           TagGenerator
             .generateTagsForFile(f)
-            .fold((e: Parsed.Error) => throw e.details, identity)
+            .fold((e: Parsed.Error) => {
+              warn(f, e.message)
+              Seq.empty
+            }, identity)
             .map(
               tag =>
                 if (relativizePaths) tag.relativize(outputFile)
@@ -70,8 +81,8 @@ object Main {
 
     try {
       (header ++ lines) foreach { t =>
-        pw.write("\n")
         pw.write(t)
+        pw.write("\n")
       }
     } finally {
       pw.close()
