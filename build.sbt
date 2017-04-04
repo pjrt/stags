@@ -20,8 +20,7 @@ lazy val cli =
         Seq(
           "com.github.scopt" %% "scopt" % "3.5.0",
           "org.scalameta" %% "scalameta" % "1.6.0",
-          "org.scalameta" %% "contrib" % "1.6.0",
-          "org.scalatest" %% "scalatest" % "3.0.1"
+          "org.scalatest" %% "scalatest" % "3.0.1" % "test"
         ),
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       assemblyJarName in assembly := s"stags-${version.value}",
