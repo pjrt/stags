@@ -15,7 +15,7 @@ object TagGenerator {
   def generateTagsForFile(file: File): Either[Parsed.Error, Seq[TagLine]] =
     file.parse[Source] match {
       case Parsed.Success(s) =>
-        Right(generateTags(s).map(TagLine(_, file.getPath)))
+        Right(generateTags(s).map(TagLine(_, file.toPath)))
       case err: Parsed.Error =>
         Left(err)
 

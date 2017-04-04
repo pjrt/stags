@@ -1,5 +1,7 @@
 package co.pjrt.stags
 
+import java.nio.file.Path
+
 import scala.meta._
 import scala.util.Sorting
 
@@ -69,7 +71,7 @@ object Tag {
     Ordering.by(_.tagName.toLowerCase)
 }
 
-final case class TagLine(tag: Tag, fileName: String) {
+final case class TagLine(tag: Tag, filePath: Path) {
 
   import tag._
 
@@ -91,8 +93,16 @@ final case class TagLine(tag: Tag, fileName: String) {
 
     val langTag = "language" -> "scala"
     val fields = static :+ langTag
-    List(tagName, fileName, tagAddress).mkString(tab) + extras(fields)
+    List(tagName, filePath.toString, tagAddress).mkString(tab) + extras(fields)
   }
+
+  /**
+   * Modify the [[filePath]] to be relative to the given [[Path]]
+   */
+  final def relativize(outputPath: Path): TagLine =
+    // DESNOTE(2017-04-04, pjrt) Due to the way `Paths.relativize` works, we
+    // need to get the parent of the output file.
+    TagLine(tag, outputPath.getParent.relativize(filePath))
 }
 
 object TagLine {

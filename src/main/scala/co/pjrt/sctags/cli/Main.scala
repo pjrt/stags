@@ -1,6 +1,7 @@
 package co.pjrt.stags.cli
 
 import java.io.{File, PrintWriter}
+import java.nio.file.Paths
 
 import scala.meta.Parsed
 
@@ -8,24 +9,33 @@ import co.pjrt.stags.{Config, TagGenerator, TagLine}
 
 object Main {
 
-  private def userDir =
-    new File(System.getProperty("user.dir"))
-
   def main(args: Array[String]): Unit =
     Config.parse(args).fold(())(run)
 
+  private final val pwd =
+    Paths.get(System.getProperty("user.dir"))
+
   private def run(config: Config): Unit = {
     val files = config.files.flatMap(fetchScalaFiles)
+    val (relativizePaths, outputFile) =
+      config.outputFile.fold((false, Paths.get("tags")))(
+        f => (f.getParent != pwd, f)
+      )
     val tags: Seq[TagLine] =
       files.flatMap(
         f =>
           TagGenerator
             .generateTagsForFile(f)
             .fold((e: Parsed.Error) => throw e.details, identity)
+            .map(
+              tag =>
+                if (relativizePaths) tag.relativize(outputFile)
+                else tag
+          )
       )
 
     val sortedTags = TagLine.foldCaseSorting(tags)
-    writeFile("tags", sortedTags.map(_.vimTagLine))
+    writeFile(outputFile.toString, sortedTags.map(_.vimTagLine))
   }
 
   private def isScalaFile(file: File) =
