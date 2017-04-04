@@ -1,4 +1,4 @@
-package co.pjrt.sctags
+package co.pjrt.stags
 
 import scala.meta._
 
@@ -11,7 +11,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
   "Should generate unqualified tags for classes" in {
     val testFile =
       """
-      |package co.pjrt.sctags.test
+      |package co.pjrt.stags.test
       |
       |class SomeClass() {
       | def hello(name: String) = name
@@ -33,7 +33,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
   "Should generate unqualified tags for traits" in {
     val testFile =
       """
-      |package co.pjrt.sctags.test
+      |package co.pjrt.stags.test
       |
       |trait SomeTrait {
       | def hello(name: String) = name

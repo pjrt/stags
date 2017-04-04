@@ -1,10 +1,10 @@
-package co.pjrt.sctags.cli
+package co.pjrt.stags.cli
 
 import java.io.{File, PrintWriter}
 
 import scala.meta.Parsed
 
-import co.pjrt.sctags.{Config, TagGenerator, TagLine}
+import co.pjrt.stags.{Config, TagGenerator, TagLine}
 
 object Main {
 

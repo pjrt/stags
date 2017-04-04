@@ -36,7 +36,7 @@ lazy val cli =
         "org.scalameta" %% "contrib" % "1.6.0",
         "org.scalatest" %% "scalatest" % "3.0.1"
       ),
-    mainClass in assembly := Some("co.pjrt.sctags.cli.Main"),
+    mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
     assemblyJarName in assembly := s"stags-${version.value}",
     install := {
       assembly.value

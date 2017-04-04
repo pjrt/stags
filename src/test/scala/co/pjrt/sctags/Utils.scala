@@ -1,4 +1,4 @@
-package co.pjrt.sctags
+package co.pjrt.stags
 
 import org.scalatest.Matchers
 

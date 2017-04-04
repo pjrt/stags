@@ -2,7 +2,7 @@ package co.pjrt
 
 import scala.meta._
 
-package object sctags {
+package object stags {
 
   type TagPosition = (Int, Int)
 
