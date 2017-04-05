@@ -8,7 +8,13 @@ package object stags {
 
   implicit class DefnClassOps(val cls: Defn.Class) extends AnyVal {
 
+    private def containsMod(m: Mod): Boolean =
+      cls.mods.exists((c: Mod) => c.structure == m.structure)
+
     def isCaseClass: Boolean =
-      cls.mods.exists((m: Mod) => m.structure == Mod.Case().structure)
+      containsMod(Mod.Case())
+
+    def isImplicitClass: Boolean =
+      containsMod(Mod.Implicit())
   }
 }

@@ -290,5 +290,18 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         Tag(Some("Odd"), "d43", false, 2, 43)
       )
     }
+
+    "implicit class value should be static" in {
+      val testFile =
+        s"""
+        |implicit class Class(val x: Int) { }
+        """.stripMargin
+
+      val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+      tags ~> Seq(
+        Tag(None, "Class", false, 1, 15),
+        Tag(None, "x", true, 1, 25)
+      )
+    }
   }
 }

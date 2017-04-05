@@ -50,13 +50,8 @@ object TagGenerator {
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
       case d: Defn.Def => tagsForMember(lastParent, d.mods, d)
-      case d: Defn.Val =>
-        d.pats.flatMap(getFromPats(lastParent, d.mods, _))
-      case d: Decl.Val =>
-        d.pats.flatMap {
-          // TODO:pjrt what about others?
-          case p: Pat.Var.Term => tagsForMember(lastParent, d.mods, p)
-        }
+      case d: Defn.Val => d.pats.flatMap(getFromPats(lastParent, d.mods, _))
+      case d: Decl.Val => d.pats.flatMap(getFromPats(lastParent, d.mods, _))
       case d: Defn.Type => tagsForMember(lastParent, d.mods, d)
       case d: Decl.Type => tagsForMember(lastParent, d.mods, d)
 
@@ -77,8 +72,18 @@ object TagGenerator {
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
       case d: Defn.Class =>
+        val ctorParamTags =
+          if (d.isImplicitClass)
+            // DESNOTE(2017-04-05, pjrt) This can only possibly have a single
+            // element (due to how implicit classes work). However, parsing
+            // of other cases is valid, though they would fail to compile. Just
+            // to be in the safe side, flatten and map instead of _.head.head
+            d.ctor.paramss.flatten.map(tagForImplicitClassParam)
+          else
+            tagsForCtorParams(d.isCaseClass, d.ctor.paramss)
+
         tagsForMember(lastParent, d.mods, d) ++
-          tagsForCtorParams(d.isCaseClass, d.ctor.paramss) ++
+          ctorParamTags ++
           d.templ.stats
             .map(_.flatMap(tagsForStatement(None, _)))
             .getOrElse(Nil)
@@ -115,6 +120,12 @@ object TagGenerator {
       .map(l => Tag(Some(l), term.name, static, term.name.pos))
       .toSeq
   }
+
+  // When we are dealing with implicit classes, the parameter oughts to be
+  // static. Even though it can be accessed from the outside, it is very
+  // unlikely to ever be.
+  private def tagForImplicitClassParam(param: Term.Param) =
+    Tag(None, param.name, true, param.name.pos)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
