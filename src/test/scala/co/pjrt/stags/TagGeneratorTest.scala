@@ -163,45 +163,44 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     tags ~>
       List(
         Tag(None, "SomeObject", false, 3, 7),
-        Tag(
-          None,
-          "InnerObject",
-          false,
-          4,
-          22
-        ),
-        Tag(
-          Some("SomeObject"),
-          "InnerObject",
-          false,
-          4,
-          22
-        ),
-        Tag(
-          None,
-          "privateHello",
-          true,
-          5,
-          15
-        ),
-        Tag(
-          Some("InnerObject"),
-          "privateHello",
-          true,
-          5,
-          15
-        ),
+        Tag(None, "InnerObject", false, 4, 22),
+        Tag(Some("SomeObject"), "InnerObject", false, 4, 22),
+        Tag(None, "privateHello", true, 5, 15),
+        Tag(Some("InnerObject"), "privateHello", true, 5, 15),
         Tag(None, "publicHello", false, 6, 7),
         Tag(Some("InnerObject"), "publicHello", false, 6, 7),
         Tag(None, "SealedTrait", false, 9, 13),
         Tag(None, "f", false, 10, 12),
-        Tag(
-          None,
-          "protectedHello",
-          false,
-          11,
-          22
-        )
+        Tag(None, "protectedHello", false, 11, 22)
+      )
+  }
+
+  "Should generate static tags for private[enclosing] and private[this]" in {
+    val testFile =
+      """
+      |package co.pjrt.ctags.test
+      |
+      |object SomeObject {
+      | private[SomeObject] object InnerObject {
+      |   def publicHello(name: String) = name
+      | }
+      |}
+      |sealed trait SealedTrait {
+      |  private[this] def protectedHello(name: String) = name
+      |}
+      """.stripMargin
+
+    val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+
+    tags ~>
+      List(
+        Tag(None, "SomeObject", false, 3, 7),
+        Tag(None, "InnerObject", true, 4, 28),
+        Tag(Some("SomeObject"), "InnerObject", true, 4, 28),
+        Tag(None, "publicHello", false, 5, 7),
+        Tag(Some("InnerObject"), "publicHello", false, 5, 7),
+        Tag(None, "SealedTrait", false, 8, 13),
+        Tag(None, "protectedHello", true, 9, 20)
       )
   }
 

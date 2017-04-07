@@ -163,15 +163,14 @@ object TagGenerator {
     mods
       .collect {
         case Mod.Private(Name.Anonymous()) => true
+        case Mod.Private(Term.This(Name.Anonymous())) => true
         case Mod.Private(Name.Indeterminate(name)) =>
-          // DESNOTE(2017-03-21, prodriguez): If the name of the private thing
+          // DESNOTE(2017-03-21, pjrt): If the name of the private thing
           // is the parent object, then it is just private.
-          if (prefix.contains(name))
+          if (name == "this" || prefix.contains(name))
             true
           else
             false
-        case Mod.ValParam() => false
-        case Mod.VarParam() => false
       }
       .headOption
       .getOrElse(false)

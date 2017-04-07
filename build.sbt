@@ -10,7 +10,7 @@ lazy val install = taskKey[Unit]("install")
 lazy val cli =
   (project in file("."))
     .settings(
-      version := "0.1-SNAPSHOT",
+      version := "0.1",
       scalaVersion := "2.12.1",
       scalacOptions ++= scalacOps,
       scalacOptions in (Compile, console) ~=
