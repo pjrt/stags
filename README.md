@@ -39,11 +39,12 @@ were defined; you could think of them as "private". Vim understand static tags
 and will match them first before anything else.
 
 Static tags lend themselves nicely to private field and functions, so `stags`
-does so except while taking care of some odd Scala intricacies.
+does so, except for some specific Scala intricacies.
 
-If a def/val/class/ect is `private`, then it is static. This means that if it
-is `private[X]` then we check if `X` is simply the enclosing parent. However,
-if X != enclosing, then we mark it as non-static. For example
+If a def/val/class/ect is `private`, then it is static. If it is private for
+some large scope, then it isn't static. This means that if it is `private[X]`
+then we check if `X` is simply the enclosing parent. However, if X !=
+enclosing, then we mark it as non-static. For example
 
 ```scala
 object X {
@@ -60,11 +61,11 @@ accessed from outside the file.
 
 Other cases that are marked as static are:
 
-* field constructors in classes (ie: `class X(a: Int, b: String, c: Boolean)`)
-  * But non-static tags for the *first* parameter group of `case` classes (since those are accessible by default)
-    * `case class X(a: Int)(b: Int)` <- `a` will be non-static, while `b` is
+* constructor fields in classes (ie: `class X(a: Int, b: String, c: Boolean)` are all static)
+  * But non-static for the **first** parameter group of `case` classes (since those are accessible by default)
+    * `case class X(a: Int)(b: Int)` <- `a` will be non-static, but `b` is static
   * If any of them are marked as "private", then it is not static
-* single field in an implicit class
+* the single field in an implicit class/case class
   * `implicit class X(val x: Int)` <- `x` is static
   * this is done because chances are that `x` will never be accessed anywhere but this file
 
@@ -81,7 +82,7 @@ SomeObject.foo(...)
 OtherObject.foo(...)
 ```
 
-In order to differentite betweent the two, `stags` generates tags for all
+In order to differentiate between the two, `stags` generates tags for all
 fields along with an extra tag that combines their parent with the tag itself.
 
 So the follow code would produce three tags: `Example`, `foo` and `Example.foo`:
@@ -96,7 +97,8 @@ Now vim won't understand such a tag right off the bat. The following
 modification is required:
 
 TODO:pjrt This does not work correctly when trying to access the parent of the
-tag. IE: when trying to fetch `Example` in `Example.foo`. It will jump to `foo`
+tag. IE: when trying to fetch `Example` in `Example.foo`. It will jump to `foo`.
+Note though that visual-mode works for tag jumping.
 ```viml
 function! TagJumpDot()
   let l:orig_keyword = &iskeyword
