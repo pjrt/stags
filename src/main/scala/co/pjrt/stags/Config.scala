@@ -1,7 +1,8 @@
 package co.pjrt.stags
 
 import java.io.File
-import java.nio.file.Path
+
+import co.pjrt.stags.paths.Path
 
 /**
  * @param files to generate tags for
@@ -16,8 +17,6 @@ case class Config(files: Seq[File], outputFile: Option[Path]) {
 }
 
 object Config {
-
-  private final val defaultOutput = new File(System.getProperty("user.dir"))
 
   implicit val zero: scopt.Zero[Config] =
     scopt.Zero.zero(Config(Seq.empty, None))
@@ -39,7 +38,7 @@ object Config {
           if (!f.isDirectory) success
           else failure("option --output can't be a directory")
       )
-      .action((f, c) => c.setOutputFile(f.toPath))
+      .action((f, c) => c.setOutputFile(Path.fromNio(f.toPath)))
       .text("location of the tags file. Default: ./tags")
   }
 

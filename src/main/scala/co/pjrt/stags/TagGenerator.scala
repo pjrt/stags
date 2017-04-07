@@ -4,6 +4,8 @@ import java.io.File
 
 import scala.meta._
 
+import co.pjrt.stags.paths.Path
+
 object TagGenerator {
 
   /**
@@ -15,7 +17,7 @@ object TagGenerator {
   def generateTagsForFile(file: File): Either[Parsed.Error, Seq[TagLine]] =
     file.parse[Source] match {
       case Parsed.Success(s) =>
-        Right(generateTags(s).map(TagLine(_, file.toPath)))
+        Right(generateTags(s).map(TagLine(_, Path.fromNio(file.toPath))))
       case err: Parsed.Error =>
         Left(err)
 

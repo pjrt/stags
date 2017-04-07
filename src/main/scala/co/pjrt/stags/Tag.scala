@@ -1,9 +1,9 @@
 package co.pjrt.stags
 
-import java.nio.file.Path
-
 import scala.meta._
 import scala.util.Sorting
+
+import co.pjrt.stags.paths.Path
 
 /**
  * A [[Tag]] contains all the information necessary to create a tag line from
@@ -65,14 +65,14 @@ object Tag {
       pos.start.column
     )
   }
-
-  implicit val ordering: Ordering[Tag] =
-    Ordering.by(_.tagName.toLowerCase)
 }
 
+/**
+ * A [[TagLine]] is simple a [[Tag]] and a [[Path]]
+ *
+ * It represents the final, file-representation of a tag.
+ */
 final case class TagLine(tag: Tag, filePath: Path) {
-
-  import tag._
 
   private final val term = "\""
   private final val tab = "\t"
@@ -86,6 +86,8 @@ final case class TagLine(tag: Tag, filePath: Path) {
    * See http://vimdoc.sourceforge.net/htmldoc/tagsrch.html#tags-file-format
    */
   final val vimTagLine: String = {
+    import tag._
+
     val static =
       if (isStatic) Seq(("file" -> ""))
       else Seq.empty
@@ -98,14 +100,21 @@ final case class TagLine(tag: Tag, filePath: Path) {
   /**
    * Modify the [[filePath]] to be relative to the given [[Path]]
    */
-  final def relativize(outputPath: Path): TagLine =
+  final def relativize(outputPath: Path): TagLine = {
     // DESNOTE(2017-04-04, pjrt) Due to the way `Paths.relativize` works, we
     // need to get the parent of the output file.
     TagLine(tag, outputPath.getParent.relativize(filePath))
+  }
 }
 
 object TagLine {
 
+  /**
+   * Sorts the list of taglines in fold-case ordering (ie: case insensitive)
+   *
+   * This is the preferred way of sorting tags in vim since it avoids linear
+   * search when `ignorecase` is set. See `:h tags-file-format`
+   */
   final def foldCaseSorting(tags: Seq[TagLine]): Seq[TagLine] = {
     implicit val sorting: Ordering[TagLine] =
       Ordering.by(_.tag.tagName.toLowerCase)
@@ -113,6 +122,9 @@ object TagLine {
     Sorting.stableSort(tags)
   }
 
+  /**
+   * Sorts the list of taglines in ascii ordering (ie: case sensitive)
+   */
   final def asciiSorting(tags: Seq[TagLine]): Seq[TagLine] = {
     implicit val sorting: Ordering[TagLine] = Ordering.by(_.tag.tagName)
 

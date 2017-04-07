@@ -1,11 +1,11 @@
 package co.pjrt.stags.cli
 
 import java.io.{File, PrintStream, PrintWriter}
-import java.nio.file.Paths
 
 import scala.meta.Parsed
 
 import co.pjrt.stags.{Config, TagGenerator, TagLine}
+import co.pjrt.stags.paths.Path
 
 object Main {
 
@@ -15,7 +15,7 @@ object Main {
   private lazy val err: PrintStream = System.err
 
   private final val pwd =
-    Paths.get(System.getProperty("user.dir"))
+    Path.fromString(System.getProperty("user.dir"))
 
   private def warn(file: File, msg: String): Unit = {
 
@@ -25,10 +25,7 @@ object Main {
 
   private def run(config: Config): Unit = {
     val files = config.files.flatMap(fetchScalaFiles)
-    val (relativizePaths, outputFile) =
-      config.outputFile.fold((false, Paths.get("tags")))(
-        f => (f.getParent != pwd, f)
-      )
+    val outputFile = config.outputFile.getOrElse(Path.fromString("tags"))
     val tags: Seq[TagLine] =
       files.flatMap(
         f =>
@@ -38,11 +35,7 @@ object Main {
               warn(f, e.message)
               Seq.empty
             }, identity)
-            .map(
-              tag =>
-                if (relativizePaths) tag.relativize(outputFile)
-                else tag
-          )
+            .map(_.relativize(outputFile))
       )
 
     val sortedTags = TagLine.foldCaseSorting(tags)

@@ -1,10 +1,10 @@
 package co.pjrt.stags
 
-import java.nio.file.Paths
-
 import scala.meta._
 
 import org.scalatest.{FreeSpec, Matchers}
+
+import co.pjrt.stags.paths.Path
 
 class TagLineTest extends FreeSpec with Matchers {
 
@@ -30,7 +30,7 @@ class TagLineTest extends FreeSpec with Matchers {
     "should produce a complete non-static tag line" in {
       val t = Tag(Some("Obj"), "tagName", false, 0, 1)
 
-      val testFile = Paths.get("TestFile.scala")
+      val testFile = Path.fromString("TestFile.scala")
       TagLine(t, testFile).vimTagLine shouldBe
         s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tlanguage:scala"""
     }
@@ -38,28 +38,32 @@ class TagLineTest extends FreeSpec with Matchers {
     "should produce a complete static tag line" in {
       val t = Tag(Some("Obj"), "tagName", true, 0, 1)
 
-      val testFile = Paths.get("TestFile.scala")
+      val testFile = Path.fromString("TestFile.scala")
       TagLine(t, testFile).vimTagLine shouldBe
         s"""Obj.tagName\t$testFile\t${call(1, 2)}"\tfile:\tlanguage:scala"""
     }
   }
 
+  val pwd = System.getProperty("user.dir")
+
+  def abs(p: String): String =
+    pwd + "/" + p
+
   "relativize" - {
 
     def testRelative(targetS: String, filePathS: String, expectedS: String) = {
 
-      val target = Paths.get(targetS)
-      val filePath = Paths.get(filePathS)
+      val target = Path.fromString(targetS)
+      val filePath = Path.fromString(filePathS)
       val tag = Tag(None, "tagName", false, 0, 1)
 
-      val expected = Paths.get(expectedS)
-
-      TagLine(tag, filePath).relativize(target).filePath shouldBe expected
+      TagLine(tag, filePath)
+        .relativize(target)
+        .filePath
+        .toString shouldBe expectedS
 
     }
 
-    // TODO: pjrt Add tests for self, children and parents
-    // This currently doesn't work
     "should modify the filepath to be relative from the target in" - {
       "relative: branch" in {
         testRelative(
@@ -71,9 +75,89 @@ class TagLineTest extends FreeSpec with Matchers {
 
       "absolute: branch" in {
         testRelative(
-          "/home/code/.git/tag",
-          "/home/code/src/main/stuff/hello.scala",
+          abs(".git/tag"),
+          abs("src/main/stuff/hello.scala"),
           "../src/main/stuff/hello.scala"
+        )
+      }
+
+      "relative: branch: mixed: relative tag" in {
+        testRelative(
+          ".git/tag",
+          abs("src/main/stuff/hello.scala"),
+          "../src/main/stuff/hello.scala"
+        )
+      }
+
+      "absolute: branch: mixed: absolute tag" in {
+        testRelative(
+          abs(".git/tag"),
+          "src/main/stuff/hello.scala",
+          "../src/main/stuff/hello.scala"
+        )
+      }
+
+      "relative: child" in {
+        testRelative(
+          "src/tags",
+          "src/main/stuff/hello.scala",
+          "main/stuff/hello.scala"
+        )
+      }
+
+      "absolute: child" in {
+        testRelative(
+          abs("src/tags"),
+          abs("src/main/stuff/hello.scala"),
+          "main/stuff/hello.scala"
+        )
+      }
+
+      "relative: parent" in {
+        testRelative(
+          "../tags",
+          "src/main/stuff/hello.scala",
+          "stags/src/main/stuff/hello.scala"
+        )
+      }
+
+      "absolute: parent" in {
+        testRelative(
+          abs("../tags"),
+          abs("src/main/stuff/hello.scala"),
+          "stags/src/main/stuff/hello.scala"
+        )
+      }
+
+      "relative: pwd" in {
+        testRelative(
+          "tags",
+          "src/main/stuff/hello.scala",
+          "src/main/stuff/hello.scala"
+        )
+      }
+
+      "absolute: pwd" in {
+        testRelative(
+          abs("tags"),
+          abs("src/main/stuff/hello.scala"),
+          "src/main/stuff/hello.scala"
+        )
+      }
+
+      "relative: pwd: mixed: relative tag" in {
+        testRelative(
+          "tags",
+          abs("src/main/stuff/hello.scala"),
+          "src/main/stuff/hello.scala"
+        )
+      }
+
+      "absolute: pwd: mixed: absolute tag file" in {
+        testRelative(
+          abs("tags"),
+          "src/main/stuff/hello.scala",
+          "src/main/stuff/hello.scala"
         )
       }
     }
