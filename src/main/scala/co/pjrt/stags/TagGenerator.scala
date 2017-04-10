@@ -11,13 +11,13 @@ object TagGenerator {
   /**
    * Given some [[Source]] code, generate a sequence of [[Tag]]s for it
    */
-  def generateTags(source: Source): Seq[Tag] =
+  def generateTags(source: Source): Seq[ScopedTag] =
     source.stats.flatMap(tagsForTopLevel(_))
 
-  def generateTagsForFile(file: File): Either[Parsed.Error, Seq[TagLine]] =
+  def generateTagsForFile(file: File)(implicit conf: GeneratorConfig): Either[Parsed.Error, Seq[TagLine]] =
     file.parse[Source] match {
       case Parsed.Success(s) =>
-        Right(generateTags(s).map(TagLine(_, Path.fromNio(file.toPath))))
+        Right(generateTags(s).flatMap(_.mkTagLines(Path.fromNio(file.toPath), conf.qualifiedDepth)))
       case err: Parsed.Error =>
         Left(err)
 
@@ -25,10 +25,10 @@ object TagGenerator {
 
   def generateTagsForFileName(
       fileName: String
-    ): Either[Parsed.Error, Seq[TagLine]] =
+    )(implicit conf: GeneratorConfig): Either[Parsed.Error, Seq[TagLine]] =
     generateTagsForFile(new File(fileName))
 
-  private def tagsForTopLevel(stat: Stat): Seq[Tag] = {
+  private def tagsForTopLevel(stat: Stat): Seq[ScopedTag] = {
 
     stat match {
       case obj: Pkg =>
@@ -37,44 +37,44 @@ object TagGenerator {
         // child of it.
         obj.stats.flatMap(tagsForTopLevel)
       case st =>
-        tagsForStatement(None, st)
+        tagsForStatement(Seq.empty, st)
     }
   }
 
   private def tagsForStatement(
-      lastParent: Option[Term.Name],
+      scope: Seq[Term.Name],
       child: Stat
-    ): Seq[Tag] = {
+    ): Seq[ScopedTag] = {
 
     child match {
       // DESNOTE(2017-03-15, pjrt) There doesn't seem to be a way to
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
-      case d: Defn.Def => tagsForMember(lastParent, d.mods, d)
-      case d: Defn.Val => d.pats.flatMap(getFromPats(lastParent, d.mods, _))
-      case d: Decl.Val => d.pats.flatMap(getFromPats(lastParent, d.mods, _))
-      case d: Defn.Type => tagsForMember(lastParent, d.mods, d)
-      case d: Decl.Type => tagsForMember(lastParent, d.mods, d)
+      case d: Defn.Def => Seq(tagsForMember(scope, d.mods, d))
+      case d: Defn.Val => d.pats.flatMap(getFromPats(scope, d.mods, _))
+      case d: Decl.Val => d.pats.flatMap(getFromPats(scope, d.mods, _))
+      case d: Defn.Type => Seq(tagsForMember(scope, d.mods, d))
+      case d: Decl.Type => Seq(tagsForMember(scope, d.mods, d))
 
       case d: Defn.Object =>
-        tagsForMember(lastParent, d.mods, d) ++
+        tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(Some(d.name), _)))
+            .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
             .getOrElse(Nil)
       case d: Pkg.Object =>
-        tagsForMember(lastParent, d.mods, d) ++
+        tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(Some(d.name), _)))
+            .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
             .getOrElse(Nil)
 
       case d: Defn.Trait =>
-        tagsForMember(lastParent, d.mods, d) ++
+        tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(None, _)))
+            .map(_.flatMap(tagsForStatement(Seq.empty, _)))
             .getOrElse(Nil)
       case d: Defn.Class =>
-        val ctorParamTags =
+        val ctorParamTags: Seq[ScopedTag] =
           if (d.isImplicitClass)
             // DESNOTE(2017-04-05, pjrt) This can only possibly have a single
             // element (due to how implicit classes work). However, parsing
@@ -84,10 +84,9 @@ object TagGenerator {
           else
             tagsForCtorParams(d.isCaseClass, d.ctor.paramss)
 
-        tagsForMember(lastParent, d.mods, d) ++
-          ctorParamTags ++
+        (tagsForMember(scope, d.mods, d) +: ctorParamTags) ++
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(None, _)))
+            .map(_.flatMap(tagsForStatement(Seq.empty, _)))
             .getOrElse(Nil)
 
       case _ => Seq.empty
@@ -95,14 +94,14 @@ object TagGenerator {
   }
 
   private def getFromPats(
-      lastParent: Option[Term.Name],
+      scope: Seq[Term.Name],
       mods: Seq[Mod],
       pat: Pat.Arg
-    ): Seq[Tag] = {
+    ): Seq[ScopedTag] = {
 
-    def getFromPat(p: Pat.Arg) = getFromPats(lastParent, mods, p)
+    def getFromPat(p: Pat.Arg) = getFromPats(scope, mods, p)
     pat match {
-      case p: Pat.Var.Term => tagsForMember(lastParent, mods, p)
+      case p: Pat.Var.Term => Seq(tagsForMember(scope, mods, p))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
       case Pat.ExtractInfix(lhs, _, pats) =>
@@ -111,23 +110,20 @@ object TagGenerator {
   }
 
   private def tagsForMember(
-      lastParent: Option[Term.Name],
+      scope: Seq[Term.Name],
       mods: Seq[Mod],
       term: Member
     ) = {
 
-    val static = isStatic(lastParent.map(_.value), mods)
-    val basicTag = Tag(None, term.name, static, term.name.pos)
-    basicTag +: lastParent
-      .map(l => Tag(Some(l), term.name, static, term.name.pos))
-      .toSeq
+    val static = isStatic(scope.map(_.value), mods)
+    ScopedTag(scope, term.name, static, term.name.pos)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be
   // static. Even though it can be accessed from the outside, it is very
   // unlikely to ever be.
   private def tagForImplicitClassParam(param: Term.Param) =
-    Tag(None, param.name, true, param.name.pos)
+    ScopedTag(Seq.empty, param.name, true, param.name.pos)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
@@ -135,19 +131,19 @@ object TagGenerator {
   private def tagsForCtorParams(
       isCase: Boolean,
       paramss: Seq[Seq[Term.Param]]
-    ) = {
+    ): Seq[ScopedTag] = {
     paramss match {
       case first +: rem =>
         val firstIsStatic: Term.Param => Boolean = p =>
-          if (isCase) isStatic(None, p.mods) else isStaticCtorParam(p)
-        first.map(p => Tag(None, p.name, firstIsStatic(p), p.name.pos)) ++
+          if (isCase) isStatic(Seq.empty, p.mods) else isStaticCtorParam(p)
+        first.map(p => ScopedTag(Seq.empty, p.name, firstIsStatic(p), p.name.pos)) ++
           (for {
             pGroup <- rem
             param <- pGroup
           } yield {
-            Tag(
-              None,
-              param.name.value,
+            ScopedTag(
+              Seq.empty,
+              param.name,
               isStaticCtorParam(param),
               param.name.pos
             )
@@ -157,9 +153,9 @@ object TagGenerator {
   }
 
   private def isStaticCtorParam(param: Term.Param) =
-    param.mods.isEmpty || isStatic(None, param.mods)
+    param.mods.isEmpty || isStatic(Seq.empty, param.mods)
 
-  private def isStatic(prefix: Option[String], mods: Seq[Mod]): Boolean =
+  private def isStatic(prefix: Seq[String], mods: Seq[Mod]): Boolean =
     mods
       .collect {
         case Mod.Private(Name.Anonymous()) => true

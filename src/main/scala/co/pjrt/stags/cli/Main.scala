@@ -30,7 +30,7 @@ object Main {
       files.flatMap(
         f =>
           TagGenerator
-            .generateTagsForFile(f)
+            .generateTagsForFile(f)(config.generatorConfig)
             .fold((e: Parsed.Error) => {
               warn(f, e.message)
               Seq.empty

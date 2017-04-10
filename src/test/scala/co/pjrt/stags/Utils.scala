@@ -6,14 +6,13 @@ object Utils {
 
   import Matchers._
 
-  private def toMap(s: Seq[Tag]) =
-    s.map(t => t.tagName -> ((t.isStatic, t.row -> t.column))).toMap
-
   /**
    * Compare the two set of tags, while smartly displaying what went wrong
    */
-  def compareTags(actual: Seq[Tag], expected: Seq[Tag]): Unit = {
+  def compareTags(actual: Seq[ScopedTag], expected: Seq[ScopedTag])(implicit limit: Int): Unit = {
 
+    def toMap(s: Seq[ScopedTag]) =
+      s.map(t => t.mkScopedTags(limit) -> ((t.tag.isStatic, t.tag.row -> t.tag.column))).toMap
     val aSize = actual.size
     val eSize = expected.size
     if (aSize > eSize)
@@ -21,7 +20,7 @@ object Utils {
     else if (aSize < eSize)
       fail(s"Got less tags than expected $aSize < $eSize")
     else ()
-    val mActual: Map[String, (Boolean, TagPosition)] =
+    val mActual: Map[Seq[Tag], (Boolean, TagPosition)] =
       toMap(actual)
 
     def testContent(t: (Boolean, TagPosition), t2: Tag) = {
@@ -36,17 +35,17 @@ object Utils {
 
     expected.foreach { e =>
       mActual
-        .get(e.tagName)
+        .get(e.mkScopedTags(limit))
         .map { c =>
-          testContent(c, e)
+          testContent(c, e.tag)
         }
-        .getOrElse(fail(s"Did not find `${e.tagName}`"))
+        .getOrElse(fail(s"Did not find `${e.mkScopedTags(limit)}`"))
     }
   }
 
-  implicit class SeqOfTagsOps(val actual: Seq[Tag]) extends AnyVal {
+  implicit class SeqOfTagsOps(val actual: Seq[ScopedTag]) extends AnyVal {
 
-    def ~>(expected: Seq[Tag]): Unit =
-      compareTags(actual, expected)
+    def ~>(expected: Seq[ScopedTag])(implicit limit: Int = 1): Unit =
+      compareTags(actual, expected)(limit)
   }
 }

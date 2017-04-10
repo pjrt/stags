@@ -6,6 +6,48 @@ import scala.util.Sorting
 import co.pjrt.stags.paths.Path
 
 /**
+ * A [[ScopedTag]] is a [[Tag]] along with a scope that determines the
+ * qualification of the [[Tag]]
+ */
+final case class ScopedTag(scope: Seq[String], tag: Tag) {
+
+  final def mkScopedTags(limit: Int): Seq[Tag] =
+    scope.foldLeft(Seq(tag), tag.tagName, limit) {
+      case (acc @ (_, _, l), _) if l <= 0 => acc
+      case ((tags, acc, l), x) =>
+        val newTag = tag.copy(tagName = x + "." + acc)
+        (tags :+ newTag, newTag.tagName, l - 1)
+    }._1
+
+  final def mkTagLines(path: Path, limit: Int): Seq[TagLine] =
+    mkScopedTags(limit).map(TagLine(_, path))
+}
+
+object ScopedTag {
+
+  def apply(
+      scope: Seq[Name],
+      tokenName: Name,
+      isStatic: Boolean,
+      pos: Position
+    ): ScopedTag = {
+
+    ScopedTag(scope.map(_.value), Tag(tokenName, isStatic, pos))
+  }
+
+  def apply(
+      scope: Seq[String],
+      tokenName: String,
+      isStatic: Boolean,
+      row: Int,
+      col: Int
+    ): ScopedTag = {
+
+    ScopedTag(scope, Tag(tokenName, isStatic, row, col))
+  }
+}
+
+/**
  * A [[Tag]] contains all the information necessary to create a tag line from
  * a token in the syntax tree
  *
@@ -13,14 +55,10 @@ import co.pjrt.stags.paths.Path
  * outside of the syntax tree.
  */
 final case class Tag(
-    prefix: Option[String],
-    tokenName: String,
+    tagName: String,
     isStatic: Boolean,
     row: Int,
     column: Int) {
-
-  final val tagName: String =
-    prefix.fold(tokenName)(_ + "." + tokenName)
 
   lazy val pos: TagPosition = row -> column
 
@@ -34,15 +72,12 @@ final case class Tag(
 object Tag {
 
   def apply(
-      prefix: Option[Name],
       tokenName: Name,
       isStatic: Boolean,
       pos: Position
     ): Tag = {
 
-    val prefix2 = prefix.map(_.value)
     Tag(
-      prefix2,
       tokenName.value,
       isStatic,
       pos.start.line,
@@ -51,14 +86,12 @@ object Tag {
   }
 
   def apply(
-      prefix: Option[String],
       tokenName: String,
       isStatic: Boolean,
       pos: Position
     ): Tag = {
 
     Tag(
-      prefix,
       tokenName,
       isStatic,
       pos.start.line,
