@@ -48,7 +48,7 @@ lazy val cli =
 
 lazy val shFileContent = Def.task {
   s"""#!/bin/sh
-  |java -jar ../lib/${(assemblyJarName in assembly).value} $$@""".stripMargin
+  |java -jar ${(baseDirectory in assembly).value}/dist/lib/${(assemblyJarName in assembly).value} $$@""".stripMargin
 }
 
 lazy val scalacOps = Seq(

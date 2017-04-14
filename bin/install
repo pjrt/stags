@@ -5,5 +5,5 @@ mkdir -p ~/.local/lib
 
 cd $(git rev-parse --show-toplevel)
 sbt distClean dist
-cp dist/bin/stags* ~/.local/bin/
-cp dist/lib/stags* ~/.local/lib/
+ln -sf $PWD/dist/bin/stags ~/.local/bin/stags
+ln -sf $PWD/dist/lib/stags ~/.local/lib/stags
