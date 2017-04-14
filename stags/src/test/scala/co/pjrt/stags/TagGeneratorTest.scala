@@ -150,8 +150,20 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       List(
         ScopedTag(Seq.empty, "SomeObject", false, 3, 7),
         ScopedTag(Seq("SomeObject"), "InnerObject", false, 4, 22),
-        ScopedTag(Seq("InnerObject", "SomeObject"), "privateHello", true, 5, 15),
-        ScopedTag(Seq("InnerObject", "SomeObject"), "publicHello", false, 6, 7),
+        ScopedTag(
+          Seq("InnerObject", "SomeObject"),
+          "privateHello",
+          true,
+          5,
+          15
+        ),
+        ScopedTag(
+          Seq("InnerObject", "SomeObject"),
+          "publicHello",
+          false,
+          6,
+          7
+        ),
         ScopedTag(Seq.empty, "SealedTrait", false, 9, 13),
         ScopedTag(Seq.empty, "f", false, 10, 12),
         ScopedTag(Seq.empty, "protectedHello", false, 11, 22)
@@ -179,7 +191,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       List(
         ScopedTag(Seq.empty, "SomeObject", false, 3, 7),
         ScopedTag(Seq("SomeObject"), "InnerObject", true, 4, 28),
-        ScopedTag(Seq("InnerObject", "SomeObject"), "publicHello", false, 5, 7),
+        ScopedTag(
+          Seq("InnerObject", "SomeObject"),
+          "publicHello",
+          false,
+          5,
+          7
+        ),
         ScopedTag(Seq.empty, "SealedTrait", false, 8, 13),
         ScopedTag(Seq.empty, "protectedHello", true, 9, 20)
       )

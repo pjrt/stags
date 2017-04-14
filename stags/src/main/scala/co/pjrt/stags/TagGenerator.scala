@@ -14,10 +14,17 @@ object TagGenerator {
   def generateTags(source: Source): Seq[ScopedTag] =
     source.stats.flatMap(tagsForTopLevel(_))
 
-  def generateTagsForFile(file: File)(implicit conf: GeneratorConfig): Either[Parsed.Error, Seq[TagLine]] =
+  def generateTagsForFile(
+      file: File
+    )(implicit conf: GeneratorConfig
+    ): Either[Parsed.Error, Seq[TagLine]] =
     file.parse[Source] match {
       case Parsed.Success(s) =>
-        Right(generateTags(s).flatMap(_.mkTagLines(Path.fromNio(file.toPath), conf.qualifiedDepth)))
+        Right(
+          generateTags(s).flatMap(
+            _.mkTagLines(Path.fromNio(file.toPath), conf.qualifiedDepth)
+          )
+        )
       case err: Parsed.Error =>
         Left(err)
 
@@ -25,7 +32,8 @@ object TagGenerator {
 
   def generateTagsForFileName(
       fileName: String
-    )(implicit conf: GeneratorConfig): Either[Parsed.Error, Seq[TagLine]] =
+    )(implicit conf: GeneratorConfig
+    ): Either[Parsed.Error, Seq[TagLine]] =
     generateTagsForFile(new File(fileName))
 
   private def tagsForTopLevel(stat: Stat): Seq[ScopedTag] = {
@@ -60,19 +68,19 @@ object TagGenerator {
       case d: Defn.Object =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
-            .getOrElse(Nil)
+          .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
+          .getOrElse(Nil)
       case d: Pkg.Object =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
-            .getOrElse(Nil)
+          .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
+          .getOrElse(Nil)
 
       case d: Defn.Trait =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(Seq.empty, _)))
-            .getOrElse(Nil)
+          .map(_.flatMap(tagsForStatement(Seq.empty, _)))
+          .getOrElse(Nil)
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
           if (d.isImplicitClass)
@@ -136,7 +144,9 @@ object TagGenerator {
       case first +: rem =>
         val firstIsStatic: Term.Param => Boolean = p =>
           if (isCase) isStatic(Seq.empty, p.mods) else isStaticCtorParam(p)
-        first.map(p => ScopedTag(Seq.empty, p.name, firstIsStatic(p), p.name.pos)) ++
+        first.map(
+          p => ScopedTag(Seq.empty, p.name, firstIsStatic(p), p.name.pos)
+        ) ++
           (for {
             pGroup <- rem
             param <- pGroup

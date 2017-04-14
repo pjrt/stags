@@ -4,30 +4,49 @@ import java.nio.file.attribute.{PosixFilePermission => Perm}
 import scala.collection.JavaConverters._
 
 lazy val dist = taskKey[Unit]("dist")
-lazy val distClean = taskKey[Unit]("dist")
+lazy val distClean = taskKey[Unit]("distClean")
+lazy val distLocation = settingKey[String]("distLocation")
+
+lazy val libVersion = "0.1"
+
+lazy val commonSettings =
+  Seq(
+    organization := "co.pjrt",
+    scalaVersion := "2.12.1",
+    scalacOptions := scalacOps,
+    version := libVersion,
+    scalacOptions in (Compile, console) ~=
+      (_.filterNot(_ == "-Ywarn-unused-import")),
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+  )
+
+lazy val root =
+  (project in file("."))
+    .aggregate(stags, cli)
+
+lazy val stags =
+  (project in file("stags"))
+    .settings(commonSettings:_*)
+    .settings(
+      libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0"
+    )
 
 lazy val cli =
-  (project in file("."))
+  (project in file("cli"))
+    .dependsOn(stags % "compile->compile;test->test")
+    .settings(commonSettings:_*)
     .settings(
-      version := "0.1",
-      scalaVersion := "2.12.1",
-      scalacOptions ++= scalacOps,
-      scalacOptions in (Compile, console) ~=
-        (_.filterNot(_ == "-Ywarn-unused-import")),
-      libraryDependencies ++=
-        Seq(
-          "com.github.scopt" %% "scopt" % "3.5.0",
-          "org.scalameta" %% "scalameta" % "1.6.0",
-          "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-        ),
+      libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       assemblyJarName in assembly := s"stags-${version.value}",
+      distLocation := (baseDirectory in assembly).value + "/dist/",
       dist := {
         assembly.value
         val jar = (assemblyOutputPath in assembly).value
-        val libLoc = "dist/lib/" + (assemblyJarName in assembly).value
+        val distLoc = distLocation.value
+        val libLoc = distLoc + "lib/" + (assemblyJarName in assembly).value
         val target = new File(libLoc)
-        val shFilePath = "dist/bin/stags"
+        val shFilePath = distLoc + "bin/stags"
         IO.copyFile(jar, target)
         IO.write(new File(shFilePath), shFileContent.value.getBytes)
         val perms =

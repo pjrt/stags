@@ -9,10 +9,23 @@ object Utils {
   /**
    * Compare the two set of tags, while smartly displaying what went wrong
    */
-  def compareTags(actual: Seq[ScopedTag], expected: Seq[ScopedTag])(implicit limit: Int): Unit = {
+  def compareTags(
+      actual: Seq[ScopedTag],
+      expected: Seq[ScopedTag]
+    )(implicit limit: Int
+    ): Unit = {
 
     def toMap(s: Seq[ScopedTag]) =
-      s.map(t => t.mkScopedTags(limit) -> ((t.tag.isStatic, t.tag.row -> t.tag.column))).toMap
+      s.map(
+          t =>
+            t.mkScopedTags(limit) -> (
+              (
+                t.tag.isStatic,
+                t.tag.row -> t.tag.column
+              )
+          )
+        )
+        .toMap
     val aSize = actual.size
     val eSize = expected.size
     if (aSize > eSize)

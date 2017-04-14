@@ -12,12 +12,14 @@ import co.pjrt.stags.paths.Path
 final case class ScopedTag(scope: Seq[String], tag: Tag) {
 
   final def mkScopedTags(limit: Int): Seq[Tag] =
-    scope.foldLeft(Seq(tag), tag.tagName, limit) {
-      case (acc @ (_, _, l), _) if l <= 0 => acc
-      case ((tags, acc, l), x) =>
-        val newTag = tag.copy(tagName = x + "." + acc)
-        (tags :+ newTag, newTag.tagName, l - 1)
-    }._1
+    scope
+      .foldLeft(Seq(tag), tag.tagName, limit) {
+        case (acc @ (_, _, l), _) if l <= 0 => acc
+        case ((tags, acc, l), x) =>
+          val newTag = tag.copy(tagName = x + "." + acc)
+          (tags :+ newTag, newTag.tagName, l - 1)
+      }
+      ._1
 
   final def mkTagLines(path: Path, limit: Int): Seq[TagLine] =
     mkScopedTags(limit).map(TagLine(_, path))
@@ -71,11 +73,7 @@ final case class Tag(
 
 object Tag {
 
-  def apply(
-      tokenName: Name,
-      isStatic: Boolean,
-      pos: Position
-    ): Tag = {
+  def apply(tokenName: Name, isStatic: Boolean, pos: Position): Tag = {
 
     Tag(
       tokenName.value,
@@ -85,11 +83,7 @@ object Tag {
     )
   }
 
-  def apply(
-      tokenName: String,
-      isStatic: Boolean,
-      pos: Position
-    ): Tag = {
+  def apply(tokenName: String, isStatic: Boolean, pos: Position): Tag = {
 
     Tag(
       tokenName,
@@ -150,9 +144,11 @@ object TagLine {
    */
   final def foldCaseSorting(tags: Seq[TagLine]): Seq[TagLine] = {
     implicit val sorting: Ordering[TagLine] =
-      Ordering.by(_.tag.tagName.toLowerCase)
+      Ordering.fromLessThan(
+        (x, y) => x.tag.tagName.compareToIgnoreCase(y.tag.tagName) < 0
+      )
 
-    Sorting.stableSort(tags)
+    Sorting.stableSort(tags)(implicitly, sorting)
   }
 
   /**

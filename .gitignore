@@ -10,6 +10,7 @@
 .history
 .lib/
 dist/*
+cli/dist/*
 target/
 lib_managed/
 src_managed/

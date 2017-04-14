@@ -4,28 +4,19 @@ import java.io.{File, PrintStream, PrintWriter}
 
 import scala.meta.Parsed
 
-import co.pjrt.stags.{Config, TagGenerator, TagLine}
+import co.pjrt.stags.{TagGenerator, TagLine}
 import co.pjrt.stags.paths.Path
 
-object Main {
+object Cli {
 
-  def main(args: Array[String]): Unit =
-    Config.parse(args).fold(())(run)
-
-  private lazy val err: PrintStream = System.err
-
-  private final val pwd =
-    Path.fromString(System.getProperty("user.dir"))
-
-  private def warn(file: File, msg: String): Unit = {
-
-    val warnMsg = s"${LogLevel.warn} Error in ${file.getPath}: $msg"
-    err.println(warnMsg)
+  final def run_(config: Config): Unit = {
+    run(config)
+    ()
   }
 
-  private def run(config: Config): Unit = {
+  final def run(config: Config): File = {
     val files = config.files.flatMap(fetchScalaFiles)
-    val outputFile = config.outputFile.getOrElse(Path.fromString("tags"))
+    val outPath = config.outputFile.getOrElse(Path.fromString("tags"))
     val tags: Seq[TagLine] =
       files.flatMap(
         f =>
@@ -35,11 +26,20 @@ object Main {
               warn(f, e.message)
               Seq.empty
             }, identity)
-            .map(_.relativize(outputFile))
+            .map(_.relativize(outPath))
       )
 
     val sortedTags = TagLine.foldCaseSorting(tags)
-    writeFile(outputFile.toString, sortedTags.map(_.vimTagLine))
+    val outputFile = outPath.nioPath.toFile
+    writeFile(outputFile, sortedTags.map(_.vimTagLine))
+    outputFile
+  }
+
+  private lazy val err: PrintStream = System.err
+  private def warn(file: File, msg: String): Unit = {
+
+    val warnMsg = s"${LogLevel.warn} Error in ${file.getPath}: $msg"
+    err.println(warnMsg)
   }
 
   private def isScalaFile(file: File) =
@@ -60,9 +60,9 @@ object Main {
       case (acc, _) => acc
     }
 
-  private def writeFile(name: String, lines: Seq[String]): Unit = {
+  private def writeFile(file: File, lines: Seq[String]): Unit = {
 
-    val pw = new PrintWriter(new File(name))
+    val pw = new PrintWriter(file)
     val header =
       Seq(
         "!_TAG_FILE_SORTED	2	/0=unsorted, 1=sorted, 2=foldcase/",

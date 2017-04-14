@@ -1,13 +1,17 @@
-package co.pjrt.stags
+package co.pjrt.stags.cli
 
 import java.io.File
 
+import co.pjrt.stags.GeneratorConfig
 import co.pjrt.stags.paths.Path
 
 /**
  * @param files to generate tags for
  */
-final case class Config(files: Seq[File], outputFile: Option[Path], qualifiedDepth: Int) {
+final case class Config(
+    files: Seq[File],
+    outputFile: Option[Path],
+    qualifiedDepth: Int) {
 
   def appendFile(file: File): Config =
     this.copy(files = files :+ file)
@@ -50,7 +54,11 @@ object Config {
     opt[Int]('d', "qualified-depth")
       .optional()
       .valueName("<int>")
-      .validate(i => if (i < 0) failure("option --qualified-depth must be positive") else success)
+      .validate(
+        i =>
+          if (i < 0) failure("option --qualified-depth must be positive")
+          else success
+      )
       .action((i, c) => c.setQualifiedDepth(i))
       .text("depth of qualified tags. Default: 1")
   }
@@ -58,5 +66,3 @@ object Config {
   def parse(args: Array[String]): Option[Config] =
     parser.parse(args, zero.zero)
 }
-
-final case class GeneratorConfig(qualifiedDepth: Int)
