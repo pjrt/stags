@@ -1,0 +1,9 @@
+#!/bin/sh
+
+mkdir -p ~/.local/bin
+mkdir -p ~/.local/lib
+
+cd $(git rev-parse --show-toplevel)
+sbt distClean dist
+cp dist/bin/stags* ~/.local/bin/
+cp dist/lib/stags* ~/.local/lib/

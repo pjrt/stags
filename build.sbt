@@ -3,9 +3,8 @@ import java.nio.file.attribute.{PosixFilePermission => Perm}
 
 import scala.collection.JavaConverters._
 
-import sbtassembly.AssemblyPlugin.defaultShellScript
-
-lazy val install = taskKey[Unit]("install")
+lazy val dist = taskKey[Unit]("dist")
+lazy val distClean = taskKey[Unit]("dist")
 
 lazy val cli =
   (project in file("."))
@@ -23,13 +22,12 @@ lazy val cli =
         ),
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       assemblyJarName in assembly := s"stags-${version.value}",
-      install := {
+      dist := {
         assembly.value
         val jar = (assemblyOutputPath in assembly).value
-        val target = new File(
-          userHome + "/.local/lib/" + (assemblyJarName in assembly).value
-        )
-        val shFilePath = userHome + "/.local/bin/stags"
+        val libLoc = "dist/lib/" + (assemblyJarName in assembly).value
+        val target = new File(libLoc)
+        val shFilePath = "dist/bin/stags"
         IO.copyFile(jar, target)
         IO.write(new File(shFilePath), shFileContent.value.getBytes)
         val perms =
@@ -41,15 +39,16 @@ lazy val cli =
             Perm.OTHERS_READ
           ).asJava
         Files.setPosixFilePermissions(Paths.get(shFilePath), perms)
+      },
+      distClean := {
+        clean.value
+        IO.delete(new File("dist"))
       }
     )
 
-lazy val userHome: String = System.getProperty("user.home")
-
 lazy val shFileContent = Def.task {
   s"""#!/bin/sh
-  |java -jar $userHome/.local/lib/${(assemblyJarName in assembly).value} $$@
-  """.stripMargin
+  |java -jar ../lib/${(assemblyJarName in assembly).value} $$@""".stripMargin
 }
 
 lazy val scalacOps = Seq(

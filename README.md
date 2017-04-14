@@ -5,7 +5,7 @@
 ```bash
 git clone git@github.com:pjrt/stags.git
 cd stags
-sbt install
+./bin/install
 ```
 
 This will install the cli in `~/.local/bin` (while the library is installed
@@ -85,18 +85,24 @@ OtherObject.foo(...)
 In order to differentiate between the two, `stags` generates tags for all
 fields along with an extra tag that combines their parent with the tag itself.
 
-So the follow code would produce three tags: `Example`, `foo` and `Example.foo`:
+So the follow code, by default, would produce three tags: `Example`, `foo` and
+`Example.foo`:
 
 ```scala
-object Example {
-  def foo(...)
+package object test {
+  object Example {
+    def foo(...)
+  }
 }
 ```
 
-Now vim won't understand such a tag right off the bat. The following
+The depth of the qualified tags is controlled by `--qualified-depth`. Setting it
+to tree would produce a third tag `test.Example.foo`.
+
+Vim won't understand such a tag right off the bat. The following
 modification is required:
 
-TODO:pjrt This does not work correctly when trying to access the parent of the
+TODO This does not work correctly when trying to access the parent of the
 tag. IE: when trying to fetch `Example` in `Example.foo`. It will jump to `foo`.
 Note though that visual-mode works for tag jumping.
 ```viml
