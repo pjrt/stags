@@ -8,10 +8,13 @@ import Utils._
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
+  def abc(q: String*): Seq[String] =
+    q ++ Seq("c", "b", "a")
+
   "Should generate unqualified tags for classes" in {
     val testFile =
       """
-      |package co.pjrt.stags.test
+      |package a.b.c
       |
       |class SomeClass() {
       | def hello(name: String) = name
@@ -23,7 +26,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      ScopedTag(Seq.empty, "SomeClass", false, 3, 6),
+      ScopedTag(abc(), "SomeClass", false, 3, 6),
       ScopedTag(Seq.empty, "hello", false, 4, 5),
       ScopedTag(Seq.empty, "Alias", false, 5, 6),
       ScopedTag(Seq.empty, "Undefined", false, 6, 6)
@@ -33,7 +36,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
   "Should generate unqualified tags for traits" in {
     val testFile =
       """
-      |package co.pjrt.stags.test
+      |package a.b.c
       |
       |trait SomeTrait {
       | def hello(name: String) = name
@@ -47,7 +50,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      ScopedTag(Seq.empty, "SomeTrait", false, 3, 6),
+      ScopedTag(abc(), "SomeTrait", false, 3, 6),
       ScopedTag(Seq.empty, "hello", false, 4, 5),
       ScopedTag(Seq.empty, "Alias", false, 5, 6),
       ScopedTag(Seq.empty, "Undefined", false, 6, 6),
@@ -105,7 +108,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
   "Should generate qualified AND unqualified tags for package object members" in {
     val testFile =
       """
-      |package co.pjrt.ctags
+      |package a.b.c
       |
       |package object test {
       | def whatup(name: String) = name
@@ -118,19 +121,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      ScopedTag(Seq.empty, "test", false, 3, 15),
-      ScopedTag(Seq("test"), "whatup", false, 4, 5),
-      ScopedTag(Seq("test"), "userName", false, 5, 5),
-      ScopedTag(Seq("test"), "userName2", false, 5, 15),
-      ScopedTag(Seq("test"), "Alias", false, 6, 6),
-      ScopedTag(Seq("test"), "Decl", false, 7, 6)
+      ScopedTag(abc(), "test", false, 3, 15),
+      ScopedTag(abc("test"), "whatup", false, 4, 5),
+      ScopedTag(abc("test"), "userName", false, 5, 5),
+      ScopedTag(abc("test"), "userName2", false, 5, 15),
+      ScopedTag(abc("test"), "Alias", false, 6, 6),
+      ScopedTag(abc("test"), "Decl", false, 7, 6)
     )
   }
 
   "Should capture modifiers and generate the correct isStatic" in {
     val testFile =
       """
-      |package co.pjrt.ctags.test
+      |package a.b.c
       |
       |object SomeObject {
       | private[test] object InnerObject {
@@ -148,23 +151,23 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     tags ~>
       List(
-        ScopedTag(Seq.empty, "SomeObject", false, 3, 7),
-        ScopedTag(Seq("SomeObject"), "InnerObject", false, 4, 22),
+        ScopedTag(abc(), "SomeObject", false, 3, 7),
+        ScopedTag(abc("SomeObject"), "InnerObject", false, 4, 22),
         ScopedTag(
-          Seq("InnerObject", "SomeObject"),
+          abc("InnerObject", "SomeObject"),
           "privateHello",
           true,
           5,
           15
         ),
         ScopedTag(
-          Seq("InnerObject", "SomeObject"),
+          abc("InnerObject", "SomeObject"),
           "publicHello",
           false,
           6,
           7
         ),
-        ScopedTag(Seq.empty, "SealedTrait", false, 9, 13),
+        ScopedTag(abc(), "SealedTrait", false, 9, 13),
         ScopedTag(Seq.empty, "f", false, 10, 12),
         ScopedTag(Seq.empty, "protectedHello", false, 11, 22)
       )
@@ -173,7 +176,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
   "Should generate static tags for private[enclosing] and private[this]" in {
     val testFile =
       """
-      |package co.pjrt.ctags.test
+      |package a.b.c
       |
       |object SomeObject {
       | private[SomeObject] object InnerObject {
@@ -189,16 +192,16 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     tags ~>
       List(
-        ScopedTag(Seq.empty, "SomeObject", false, 3, 7),
-        ScopedTag(Seq("SomeObject"), "InnerObject", true, 4, 28),
+        ScopedTag(abc(), "SomeObject", false, 3, 7),
+        ScopedTag(abc("SomeObject"), "InnerObject", true, 4, 28),
         ScopedTag(
-          Seq("InnerObject", "SomeObject"),
+          abc("InnerObject", "SomeObject"),
           "publicHello",
           false,
           5,
           7
         ),
-        ScopedTag(Seq.empty, "SealedTrait", false, 8, 13),
+        ScopedTag(abc(), "SealedTrait", false, 8, 13),
         ScopedTag(Seq.empty, "protectedHello", true, 9, 20)
       )
   }

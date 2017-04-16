@@ -43,10 +43,21 @@ object TagGenerator {
         // DESNOTE(2017-03-15, pjrt) Pkg means a `package`. If a package
         // statement is found at the top, then that means EVERYTHING will be a
         // child of it.
-        obj.stats.flatMap(tagsForTopLevel)
+        val packageScope = generatePackageScope(obj.ref)
+        obj.stats.flatMap(tagsForStatement(packageScope, _))
       case st =>
         tagsForStatement(Seq.empty, st)
     }
+  }
+
+  private def generatePackageScope(ref: Term.Ref): Seq[Term.Name] = {
+    def loop(r: Term, acc: Seq[Term.Name]): Seq[Term.Name] =
+      r match {
+        case name: Term.Name => acc :+ name
+        case select: Term.Select => loop(select.qual, acc :+ select.name)
+        case _ => acc
+      }
+    loop(ref, Seq.empty)
   }
 
   private def tagsForStatement(
