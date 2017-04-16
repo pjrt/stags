@@ -39,7 +39,8 @@ were defined; you could think of them as "private". Vim understand static tags
 and will match them first before anything else.
 
 Static tags lend themselves nicely to private field and functions, so `stags`
-does so, except for some specific Scala intricacies.
+marks private statements and fields as static, while taking care of some Scala
+intricacies.
 
 If a def/val/class/ect is `private`, then it is static. If it is private for
 some large scope, then it isn't static. This means that if it is `private[X]`
@@ -64,7 +65,7 @@ Other cases that are marked as static are:
 * constructor fields in classes (ie: `class X(a: Int, b: String, c: Boolean)` are all static)
   * But non-static for the **first** parameter group of `case` classes (since those are accessible by default)
     * `case class X(a: Int)(b: Int)` <- `a` will be non-static, but `b` is static
-  * If any of them are marked as "private", then it is not static
+  * Any are marked as "private" are static
 * the single field in an implicit class/case class
   * `implicit class X(val x: Int)` <- `x` is static
   * this is done because chances are that `x` will never be accessed anywhere but this file
