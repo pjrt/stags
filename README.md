@@ -8,8 +8,13 @@ cd stags
 ./bin/install
 ```
 
-This will install the cli in `~/.local/bin` (while the library is installed
-in `~/.local/lib`). Make sure `~/.local/bin` is in your `$PATH`.
+This will install the cli in `~/.local/bin`. Make sure `~/.local/bin` is in
+your `$PATH`.
+
+Local installation simply creates a symlink to the repo's `dist` directory.
+If the repo is deleted or moved the link will break.
+
+I plan to eventually release via the normal channels (homebrew, etc).
 
 ## Usage
 
