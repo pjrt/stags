@@ -9,10 +9,10 @@ import co.pjrt.stags.paths.Path
  * A [[ScopedTag]] is a [[Tag]] along with a scope that determines the
  * qualification of the [[Tag]]
  */
-final case class ScopedTag(scope: Seq[String], tag: Tag) {
+final case class ScopedTag(scope: Scope, tag: Tag) {
 
   final def mkScopedTags(limit: Int): Seq[Tag] =
-    scope
+    scope.toSeq
       .foldLeft(Seq(tag), tag.tagName, limit) {
         case (acc @ (_, _, l), _) if l <= 0 => acc
         case ((tags, acc, l), x) =>
@@ -28,17 +28,17 @@ final case class ScopedTag(scope: Seq[String], tag: Tag) {
 object ScopedTag {
 
   def apply(
-      scope: Seq[Name],
+      scope: Scope,
       tokenName: Name,
       isStatic: Boolean,
       pos: Position
     ): ScopedTag = {
 
-    ScopedTag(scope.map(_.value), Tag(tokenName, isStatic, pos))
+    ScopedTag(scope, Tag(tokenName, isStatic, pos))
   }
 
   def apply(
-      scope: Seq[String],
+      scope: Scope,
       tokenName: String,
       isStatic: Boolean,
       row: Int,

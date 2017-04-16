@@ -46,24 +46,21 @@ object TagGenerator {
         val packageScope = generatePackageScope(obj.ref)
         obj.stats.flatMap(tagsForStatement(packageScope, _))
       case st =>
-        tagsForStatement(Seq.empty, st)
+        tagsForStatement(LocalScope.empty, st)
     }
   }
 
-  private def generatePackageScope(ref: Term.Ref): Seq[Term.Name] = {
-    def loop(r: Term, acc: Seq[Term.Name]): Seq[Term.Name] =
+  private def generatePackageScope(ref: Term.Ref): PackageScope = {
+    def loop(r: Term, acc: Seq[String]): Seq[String] =
       r match {
-        case name: Term.Name => acc :+ name
-        case select: Term.Select => loop(select.qual, acc :+ select.name)
+        case name: Term.Name => acc :+ name.value
+        case select: Term.Select => loop(select.qual, acc :+ select.name.value)
         case _ => acc
       }
-    loop(ref, Seq.empty)
+    PackageScope(loop(ref, Seq.empty), LocalScope.empty)
   }
 
-  private def tagsForStatement(
-      scope: Seq[Term.Name],
-      child: Stat
-    ): Seq[ScopedTag] = {
+  private def tagsForStatement(scope: Scope, child: Stat): Seq[ScopedTag] = {
 
     child match {
       // DESNOTE(2017-03-15, pjrt) There doesn't seem to be a way to
@@ -79,18 +76,18 @@ object TagGenerator {
       case d: Defn.Object =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
+          .map(_.flatMap(tagsForStatement(scope.addLocal(d.name), _)))
           .getOrElse(Nil)
       case d: Pkg.Object =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(d.name +: scope, _)))
+          .map(_.flatMap(tagsForStatement(scope.addLocal(d.name), _)))
           .getOrElse(Nil)
 
       case d: Defn.Trait =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(Seq.empty, _)))
+          .map(_.flatMap(tagsForStatement(LocalScope.empty, _)))
           .getOrElse(Nil)
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
@@ -105,7 +102,7 @@ object TagGenerator {
 
         (tagsForMember(scope, d.mods, d) +: ctorParamTags) ++
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(Seq.empty, _)))
+            .map(_.flatMap(tagsForStatement(LocalScope.empty, _)))
             .getOrElse(Nil)
 
       case _ => Seq.empty
@@ -113,7 +110,7 @@ object TagGenerator {
   }
 
   private def getFromPats(
-      scope: Seq[Term.Name],
+      scope: Scope,
       mods: Seq[Mod],
       pat: Pat.Arg
     ): Seq[ScopedTag] = {
@@ -128,13 +125,9 @@ object TagGenerator {
     }
   }
 
-  private def tagsForMember(
-      scope: Seq[Term.Name],
-      mods: Seq[Mod],
-      term: Member
-    ) = {
+  private def tagsForMember(scope: Scope, mods: Seq[Mod], term: Member) = {
 
-    val static = isStatic(scope.map(_.value), mods)
+    val static = isStatic(scope.localScope, mods)
     ScopedTag(scope, term.name, static, term.name.pos)
   }
 
@@ -142,7 +135,7 @@ object TagGenerator {
   // static. Even though it can be accessed from the outside, it is very
   // unlikely to ever be.
   private def tagForImplicitClassParam(param: Term.Param) =
-    ScopedTag(Seq.empty, param.name, true, param.name.pos)
+    ScopedTag(LocalScope.empty, param.name, true, param.name.pos)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
@@ -154,16 +147,18 @@ object TagGenerator {
     paramss match {
       case first +: rem =>
         val firstIsStatic: Term.Param => Boolean = p =>
-          if (isCase) isStatic(Seq.empty, p.mods) else isStaticCtorParam(p)
+          if (isCase) isStatic(LocalScope.empty, p.mods)
+          else isStaticCtorParam(p)
         first.map(
-          p => ScopedTag(Seq.empty, p.name, firstIsStatic(p), p.name.pos)
+          p =>
+            ScopedTag(LocalScope.empty, p.name, firstIsStatic(p), p.name.pos)
         ) ++
           (for {
             pGroup <- rem
             param <- pGroup
           } yield {
             ScopedTag(
-              Seq.empty,
+              LocalScope.empty,
               param.name,
               isStaticCtorParam(param),
               param.name.pos
@@ -174,9 +169,9 @@ object TagGenerator {
   }
 
   private def isStaticCtorParam(param: Term.Param) =
-    param.mods.isEmpty || isStatic(Seq.empty, param.mods)
+    param.mods.isEmpty || isStatic(LocalScope.empty, param.mods)
 
-  private def isStatic(prefix: Seq[String], mods: Seq[Mod]): Boolean =
+  private def isStatic(prefix: LocalScope, mods: Seq[Mod]): Boolean =
     mods
       .collect {
         case Mod.Private(Name.Anonymous()) => true
