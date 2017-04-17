@@ -49,12 +49,16 @@ intricacies.
 
 If a def/val/class/ect is `private`, then it is static. If it is private for
 some large scope, then it isn't static. This means that if it is `private[X]`
-then we check if `X` is simply the enclosing parent. However, if X !=
-enclosing, then we mark it as non-static. For example
+then we check if `X` is simply the enclosing parent. However, if X isn't an
+enclosing object in this file, then we mark it as non-static. For example
 
 ```scala
+package org.example.somepackage.test
+
 object X {
-  private[X] def f = …
+  object Y {
+    private[X] def f = …
+  }
 }
 
 object K {
@@ -67,18 +71,17 @@ accessed from outside the file.
 
 Other cases that are marked as static are:
 
-* constructor fields in classes (ie: `class X(a: Int, b: String, c: Boolean)` are all static)
+* constructor fields in classes (ie: in `class X(a: Int, b: String, c: Boolean)`, `a`, `b` and `c` will all be static)
   * But non-static for the **first** parameter group of `case` classes (since those are accessible by default)
-    * `case class X(a: Int)(b: Int)` <- `a` will be non-static, but `b` is static
-  * Any are marked as "private" are static
+    * `case class X(a: Int)(b: Int)` <- `a` will be non-static, but `b` will be static
+  * Any that are marked as "private" are static
 * the single field in an implicit class/case class
   * `implicit class X(val x: Int)` <- `x` is static
   * this is done because chances are that `x` will never be accessed anywhere but this file
 
 ### Qualified tags
 
-A common pattern found when programming is the use of qualified functions in
-order to avoid conflicts. This means doing the following:
+A common pattern found when importing conflicting fields is to use them in a qualified form. For example:
 
 ```scala
 import org.example.SomeObject
@@ -91,7 +94,7 @@ OtherObject.foo(...)
 In order to differentiate between the two, `stags` generates tags for all
 fields along with an extra tag that combines their parent with the tag itself.
 
-So the follow code, by default, would produce three tags: `Example`, `foo` and
+So the following code, by default, would produce three tags: `Example`, `foo` and
 `Example.foo`:
 
 ```scala
@@ -103,7 +106,7 @@ package object test {
 ```
 
 The depth of the qualified tags is controlled by `--qualified-depth`. Setting it
-to tree would produce a third tag `test.Example.foo`.
+to three would produce a third tag `test.Example.foo`.
 
 Vim won't understand such a tag right off the bat. The following
 modification is required:
