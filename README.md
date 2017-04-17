@@ -129,7 +129,6 @@ function! QualifiedTagJump() abort
   endfor
 
   let l:combined = join(l:acc, ".")
-  echom l:combined
   try
     execute "ta " . l:combined
   catch /.*E426.*/ " Tag not found
