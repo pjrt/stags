@@ -111,17 +111,31 @@ to three would produce a third tag `test.Example.foo`.
 Vim won't understand such a tag right off the bat. The following
 modification is required:
 
-TODO This does not work correctly when trying to access the parent of the
-tag. IE: when trying to fetch `Example` in `Example.foo`. It will jump to `foo`.
-Note though that visual-mode works for tag jumping.
 ```viml
-function! TagJumpDot()
+function! QualifiedTagJump() abort
+  let l:plain_tag = expand("<cword>")
   let l:orig_keyword = &iskeyword
   set iskeyword+=\.
   let l:word = expand("<cword>")
   let &iskeyword = l:orig_keyword
-  execute "ta " . l:word
+
+  let l:splitted = split(l:word, '\.')
+  let l:acc = []
+  for wo in l:splitted
+    let l:acc = add(l:acc, wo)
+    if wo ==# l:plain_tag
+      break
+    endif
+  endfor
+
+  let l:combined = join(l:acc, ".")
+  echom l:combined
+  try
+    execute "ta " . l:combined
+  catch /.*E426.*/ " Tag not found
+    execute "ta " . l:plain_tag
+  endtry
 endfunction
 
-nnoremap <silent> <C-]> :<C-u>call TagJumpDot()<CR>
+nnoremap <silent> <C-]> :<C-u>call QualifiedTagJump()<CR>
 ```
