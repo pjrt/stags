@@ -5,45 +5,24 @@ import scala.meta.Term
 /**
  * The scope for a [[Tag]]
  */
-sealed trait Scope {
+final case class Scope(packageScope: Seq[String], localScope: Seq[String]) {
 
-  def addLocal(name: String): Scope
+  final def addLocal(name: String): Scope =
+    Scope(packageScope, name +: localScope)
 
   final def addLocal(name: Term.Name): Scope = addLocal(name.value)
 
-  final def localScope: LocalScope =
-    this match {
-      case t: LocalScope => t
-      case PackageScope(_, l) => l
-    }
+  final def toSeq: Seq[String] = packageScope ++ localScope
 
-  final def toSeq: Seq[String] =
-    this match {
-      case LocalScope(s) => s
-      case PackageScope(s, l) => l.scope ++ s
-    }
+  final def localContains(name: String): Boolean =
+    localScope.contains(name)
+
 }
 
-/**
- * The scope for the package itself
- */
-final case class PackageScope(scope: Seq[String], local: LocalScope)
-  extends Scope {
+object Scope {
 
-  def addLocal(n: String) = PackageScope(scope, local.addLocal(n))
-}
+  final def apply(packageScope: Seq[String]): Scope =
+    Scope(packageScope, Seq.empty)
 
-/**
- * Scope for local stuff (objects)
- */
-final case class LocalScope(scope: Seq[String]) extends Scope {
-  def addLocal(name: String): LocalScope =
-    LocalScope(name +: scope)
-
-  final def contains(name: String): Boolean =
-    scope.contains(name)
-}
-
-object LocalScope {
-  final val empty: LocalScope = LocalScope(Seq.empty)
+  final val empty: Scope = Scope(Seq.empty, Seq.empty)
 }

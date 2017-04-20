@@ -46,18 +46,18 @@ object TagGenerator {
         val packageScope = generatePackageScope(obj.ref)
         obj.stats.flatMap(tagsForStatement(packageScope, _))
       case st =>
-        tagsForStatement(LocalScope.empty, st)
+        tagsForStatement(Scope.empty, st)
     }
   }
 
-  private def generatePackageScope(ref: Term.Ref): PackageScope = {
+  private def generatePackageScope(ref: Term.Ref): Scope = {
     def loop(r: Term, acc: Seq[String]): Seq[String] =
       r match {
         case name: Term.Name => acc :+ name.value
         case select: Term.Select => loop(select.qual, acc :+ select.name.value)
         case _ => acc
       }
-    PackageScope(loop(ref, Seq.empty), LocalScope.empty)
+    Scope(loop(ref, Seq.empty))
   }
 
   private def tagsForStatement(scope: Scope, child: Stat): Seq[ScopedTag] = {
@@ -87,7 +87,7 @@ object TagGenerator {
       case d: Defn.Trait =>
         tagsForMember(scope, d.mods, d) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(LocalScope.empty, _)))
+          .map(_.flatMap(tagsForStatement(Scope.empty, _)))
           .getOrElse(Nil)
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
@@ -102,7 +102,7 @@ object TagGenerator {
 
         (tagsForMember(scope, d.mods, d) +: ctorParamTags) ++
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(LocalScope.empty, _)))
+            .map(_.flatMap(tagsForStatement(Scope.empty, _)))
             .getOrElse(Nil)
 
       case _ => Seq.empty
@@ -127,7 +127,7 @@ object TagGenerator {
 
   private def tagsForMember(scope: Scope, mods: Seq[Mod], term: Member) = {
 
-    val static = isStatic(scope.localScope, mods)
+    val static = isStatic(scope, mods)
     ScopedTag(scope, term.name, static, term.name.pos)
   }
 
@@ -135,7 +135,7 @@ object TagGenerator {
   // static. Even though it can be accessed from the outside, it is very
   // unlikely to ever be.
   private def tagForImplicitClassParam(param: Term.Param) =
-    ScopedTag(LocalScope.empty, param.name, true, param.name.pos)
+    ScopedTag(Scope.empty, param.name, true, param.name.pos)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
@@ -147,18 +147,18 @@ object TagGenerator {
     paramss match {
       case first +: rem =>
         val firstIsStatic: Term.Param => Boolean = p =>
-          if (isCase) isStatic(LocalScope.empty, p.mods)
+          if (isCase) isStatic(Scope.empty, p.mods)
           else isStaticCtorParam(p)
         first.map(
           p =>
-            ScopedTag(LocalScope.empty, p.name, firstIsStatic(p), p.name.pos)
+            ScopedTag(Scope.empty, p.name, firstIsStatic(p), p.name.pos)
         ) ++
           (for {
             pGroup <- rem
             param <- pGroup
           } yield {
             ScopedTag(
-              LocalScope.empty,
+              Scope.empty,
               param.name,
               isStaticCtorParam(param),
               param.name.pos
@@ -169,9 +169,9 @@ object TagGenerator {
   }
 
   private def isStaticCtorParam(param: Term.Param) =
-    param.mods.isEmpty || isStatic(LocalScope.empty, param.mods)
+    param.mods.isEmpty || isStatic(Scope.empty, param.mods)
 
-  private def isStatic(prefix: LocalScope, mods: Seq[Mod]): Boolean =
+  private def isStatic(prefix: Scope, mods: Seq[Mod]): Boolean =
     mods
       .collect {
         case Mod.Private(Name.Anonymous()) => true
@@ -179,7 +179,7 @@ object TagGenerator {
         case Mod.Private(Name.Indeterminate(name)) =>
           // DESNOTE(2017-03-21, pjrt): If the name of the private thing
           // is the parent object, then it is just private.
-          if (name == "this" || prefix.contains(name))
+          if (name == "this" || prefix.localContains(name))
             true
           else
             false

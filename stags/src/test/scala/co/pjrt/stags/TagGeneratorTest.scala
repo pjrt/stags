@@ -8,8 +8,7 @@ import Utils._
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
-  def abc(q: String*): Scope =
-    PackageScope(Seq("c", "b", "a"), LocalScope(q.toSeq))
+  def abc(q: String*): Scope = Scope(Seq("c", "b", "a"), q.toSeq)
 
   "Should generate unqualified tags for classes" in {
     val testFile =
@@ -27,9 +26,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     tags ~> List(
       ScopedTag(abc(), "SomeClass", false, 3, 6),
-      ScopedTag(LocalScope.empty, "hello", false, 4, 5),
-      ScopedTag(LocalScope.empty, "Alias", false, 5, 6),
-      ScopedTag(LocalScope.empty, "Undefined", false, 6, 6)
+      ScopedTag(Scope.empty, "hello", false, 4, 5),
+      ScopedTag(Scope.empty, "Alias", false, 5, 6),
+      ScopedTag(Scope.empty, "Undefined", false, 6, 6)
     )
   }
 
@@ -51,12 +50,12 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     tags ~> List(
       ScopedTag(abc(), "SomeTrait", false, 3, 6),
-      ScopedTag(LocalScope.empty, "hello", false, 4, 5),
-      ScopedTag(LocalScope.empty, "Alias", false, 5, 6),
-      ScopedTag(LocalScope.empty, "Undefined", false, 6, 6),
-      ScopedTag(LocalScope.empty, "defined1", false, 7, 5),
-      ScopedTag(LocalScope.empty, "defined2", false, 7, 15),
-      ScopedTag(LocalScope.empty, "undefined", false, 8, 5)
+      ScopedTag(Scope.empty, "hello", false, 4, 5),
+      ScopedTag(Scope.empty, "Alias", false, 5, 6),
+      ScopedTag(Scope.empty, "Undefined", false, 6, 6),
+      ScopedTag(Scope.empty, "defined1", false, 7, 5),
+      ScopedTag(Scope.empty, "defined2", false, 7, 15),
+      ScopedTag(Scope.empty, "undefined", false, 8, 5)
     )
   }
 
@@ -75,14 +74,14 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      ScopedTag(LocalScope.empty, "SomeObject", false, 1, 7),
-      ScopedTag(LocalScope(Seq("SomeObject")), "whatup", false, 2, 5),
-      ScopedTag(LocalScope(Seq("SomeObject")), "userName", false, 3, 5),
-      ScopedTag(LocalScope(Seq("SomeObject")), "userName2", false, 3, 15),
-      ScopedTag(LocalScope(Seq("SomeObject")), "Alias", false, 4, 6),
-      ScopedTag(LocalScope(Seq("SomeObject")), "Decl", false, 5, 6),
-      ScopedTag(LocalScope(Seq("SomeObject")), "tUserName", false, 6, 6),
-      ScopedTag(LocalScope(Seq("SomeObject")), "tUserName2", false, 6, 17)
+      ScopedTag(Scope.empty, "SomeObject", false, 1, 7),
+      ScopedTag(Scope(Seq("SomeObject")), "whatup", false, 2, 5),
+      ScopedTag(Scope(Seq("SomeObject")), "userName", false, 3, 5),
+      ScopedTag(Scope(Seq("SomeObject")), "userName2", false, 3, 15),
+      ScopedTag(Scope(Seq("SomeObject")), "Alias", false, 4, 6),
+      ScopedTag(Scope(Seq("SomeObject")), "Decl", false, 5, 6),
+      ScopedTag(Scope(Seq("SomeObject")), "tUserName", false, 6, 6),
+      ScopedTag(Scope(Seq("SomeObject")), "tUserName2", false, 6, 17)
     )
   }
 
@@ -99,9 +98,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val tags = TagGenerator.generateTags(testFile.parse[Source].get)
 
     tags ~> List(
-      ScopedTag(LocalScope.empty, "SomeObject", false, 1, 7),
-      ScopedTag(LocalScope(Seq("SomeObject")), "InnerObject", false, 2, 8),
-      ScopedTag(LocalScope(Seq("InnerObject")), "hello", false, 3, 7)
+      ScopedTag(Scope.empty, "SomeObject", false, 1, 7),
+      ScopedTag(Scope(Seq("SomeObject")), "InnerObject", false, 2, 8),
+      ScopedTag(Scope(Seq("InnerObject")), "hello", false, 3, 7)
     )
   }
 
@@ -168,8 +167,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
           7
         ),
         ScopedTag(abc(), "SealedTrait", false, 9, 13),
-        ScopedTag(LocalScope.empty, "f", false, 10, 12),
-        ScopedTag(LocalScope.empty, "protectedHello", false, 11, 22)
+        ScopedTag(Scope.empty, "f", false, 10, 12),
+        ScopedTag(Scope.empty, "protectedHello", false, 11, 22)
       )
   }
 
@@ -202,7 +201,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
           7
         ),
         ScopedTag(abc(), "SealedTrait", false, 8, 13),
-        ScopedTag(LocalScope.empty, "protectedHello", true, 9, 20)
+        ScopedTag(Scope.empty, "protectedHello", true, 9, 20)
       )
   }
 
@@ -221,10 +220,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         TagGenerator.generateTags(testFileClass.parse[Source].get)
 
       classTags ~> Seq(
-        ScopedTag(LocalScope.empty, "SomeClass", false, 1, 6),
-        ScopedTag(LocalScope.empty, "name", true, 2, 3),
-        ScopedTag(LocalScope.empty, "number", false, 3, 7),
-        ScopedTag(LocalScope.empty, "age", true, 4, 15)
+        ScopedTag(Scope.empty, "SomeClass", false, 1, 6),
+        ScopedTag(Scope.empty, "name", true, 2, 3),
+        ScopedTag(Scope.empty, "number", false, 3, 7),
+        ScopedTag(Scope.empty, "age", true, 4, 15)
       )
     }
 
@@ -243,13 +242,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       val caseTags = TagGenerator.generateTags(testFileCase.parse[Source].get)
 
       caseTags ~> Seq(
-        ScopedTag(LocalScope.empty, "SomeClass", false, 1, 11),
-        ScopedTag(LocalScope.empty, "name", false, 2, 3),
-        ScopedTag(LocalScope.empty, "number", false, 3, 7),
-        ScopedTag(LocalScope.empty, "age", true, 4, 15),
-        ScopedTag(LocalScope.empty, "address", false, 5, 16),
-        ScopedTag(LocalScope.empty, "ctx", true, 6, 3),
-        ScopedTag(LocalScope.empty, "ex", false, 7, 7)
+        ScopedTag(Scope.empty, "SomeClass", false, 1, 11),
+        ScopedTag(Scope.empty, "name", false, 2, 3),
+        ScopedTag(Scope.empty, "number", false, 3, 7),
+        ScopedTag(Scope.empty, "age", true, 4, 15),
+        ScopedTag(Scope.empty, "address", false, 5, 16),
+        ScopedTag(Scope.empty, "ctx", true, 6, 3),
+        ScopedTag(Scope.empty, "ex", false, 7, 7)
       )
     }
   }
@@ -267,7 +266,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     val caseTags = TagGenerator.generateTags(testFileCase.parse[Source].get)
 
     caseTags ~> Seq(
-      ScopedTag(LocalScope.empty, "SomeClass", false, 2, 11)
+      ScopedTag(Scope.empty, "SomeClass", false, 2, 11)
     )
   }
 
@@ -282,10 +281,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
       val tags = TagGenerator.generateTags(testFile.parse[Source].get)
       tags ~> Seq(
-        ScopedTag(LocalScope.empty, "Odd", false, 1, 7),
-        ScopedTag(LocalScope(Seq("Odd")), "d41", false, 2, 6),
-        ScopedTag(LocalScope(Seq("Odd")), "d42", false, 2, 22),
-        ScopedTag(LocalScope(Seq("Odd")), "d43", false, 2, 43)
+        ScopedTag(Scope.empty, "Odd", false, 1, 7),
+        ScopedTag(Scope(Seq("Odd")), "d41", false, 2, 6),
+        ScopedTag(Scope(Seq("Odd")), "d42", false, 2, 22),
+        ScopedTag(Scope(Seq("Odd")), "d43", false, 2, 43)
       )
     }
 
@@ -297,8 +296,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
       val tags = TagGenerator.generateTags(testFile.parse[Source].get)
       tags ~> Seq(
-        ScopedTag(LocalScope.empty, "Class", false, 1, 15),
-        ScopedTag(LocalScope.empty, "x", true, 1, 25)
+        ScopedTag(Scope.empty, "Class", false, 1, 15),
+        ScopedTag(Scope.empty, "x", true, 1, 25)
       )
     }
   }

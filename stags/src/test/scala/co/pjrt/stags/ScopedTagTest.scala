@@ -4,7 +4,7 @@ import org.scalatest.{FreeSpec, Matchers}
 
 class ScopedTagTest extends FreeSpec with Matchers {
 
-  def lscope(strs: String*) = LocalScope(strs.toSeq)
+  def lscope(strs: String*) = Scope(strs.toSeq)
 
   "mkScopedTags should generate scoped tags" in {
 
