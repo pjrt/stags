@@ -33,24 +33,25 @@ stags ./ -o path/to/tags
 
 The two main differences between stags and a general ctags generator like
 [Universal CTags](https://github.com/universal-ctags/ctags) is its ability to
-understand Scala code, and generating appropriate static tags for each filed,
-and the ability to produce qualified tags.
+understand Scala code (with all its intricacies) and the ability to produce
+qualified tags.
 
 ### Understanding Scala intricacies and static tagging them
 
-What are static tags? Static tags mean tags for "static functions". In the C
-world this meant functions that could only be used in the file where they
-were defined; you could think of them as "private". Vim understand static tags
+What are static tags? Static tags are tags for "static functions". In the C
+world this means functions that can only be used in the file where they
+are defined; you could think of them as "private". Vim understand static tags
 and will match them first before anything else.
 
 Static tags lend themselves nicely to private field and functions, so `stags`
 marks private statements and fields as static, while taking care of some Scala
 intricacies.
 
-If a def/val/class/ect is `private`, then it is static. If it is private for
-some large scope, then it isn't static. This means that if it is `private[X]`
-then we check if `X` is simply the enclosing parent. However, if X isn't an
-enclosing object in this file, then we mark it as non-static. For example
+If a def/val/class/ect is `private` within its file, then it is static. If
+it is private for some large scope, then it isn't static. This means that
+if it is `private[X]` then we check if `X` is an enclosing object within the file.
+However, if X isn't an enclosing object in this file, then we mark it as
+non-static. For example
 
 ```scala
 package org.example.somepackage.test
@@ -93,8 +94,11 @@ OtherObject.foo(...)
 
 In order to differentiate between the two, `stags` generates tags for all
 fields along with an extra tag that combines their parent with the tag itself.
+Note that `stags` never generates qualified tags for fields/methods in `trait`
+and `class` (only objects and package objects) since said fields/methods cannot be
+qualifiedly referenced.
 
-So the following code, by default, would produce three tags: `Example`, `foo` and
+Following code, by default, would produce three tags: `Example`, `foo` and
 `Example.foo`:
 
 ```scala
@@ -106,7 +110,9 @@ package object test {
 ```
 
 The depth of the qualified tags is controlled by `--qualified-depth`. Setting it
-to three would produce a third tag `test.Example.foo`.
+to three (3) would produce a third tag `test.Example.foo`.
+
+## Vim support for qualified tags
 
 Vim won't understand such a tag right off the bat. The following
 modification is required:
