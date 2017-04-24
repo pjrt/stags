@@ -13,7 +13,7 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
 
   final def mkScopedTags(limit: Int): Seq[Tag] =
     scope.toSeq
-      .foldLeft(Seq(tag), tag.tagName, limit) {
+      .foldLeft((Seq(tag), tag.tagName, limit)) {
         case (acc @ (_, _, l), _) if l <= 0 => acc
         case ((tags, acc, l), x) =>
           val newTag = tag.copy(tagName = x + "." + acc)

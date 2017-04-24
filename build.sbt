@@ -12,7 +12,7 @@ lazy val libVersion = "0.1"
 lazy val commonSettings =
   Seq(
     organization := "co.pjrt",
-    scalaVersion := "2.12.1",
+    scalaVersion := "2.12.2",
     scalacOptions := scalacOps,
     version := libVersion,
     scalacOptions in (Compile, console) ~=
