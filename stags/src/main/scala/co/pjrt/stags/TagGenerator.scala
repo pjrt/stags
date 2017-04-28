@@ -3,6 +3,7 @@ package co.pjrt.stags
 import java.io.File
 
 import scala.meta._
+import scala.meta.parsers.Parsed
 
 import co.pjrt.stags.paths.Path
 

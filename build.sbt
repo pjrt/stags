@@ -12,7 +12,7 @@ lazy val libVersion = "0.1"
 lazy val commonSettings =
   Seq(
     organization := "co.pjrt",
-    scalaVersion := "2.12.2",
+    scalaVersion := "2.11.11",
     scalacOptions := scalacOps,
     version := libVersion,
     scalacOptions in (Compile, console) ~=
@@ -34,6 +34,7 @@ lazy val stags =
 lazy val cli =
   (project in file("cli"))
     .dependsOn(stags % "compile->compile;test->test")
+    .enablePlugins(ScalaNativePlugin)
     .settings(commonSettings:_*)
     .settings(
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
