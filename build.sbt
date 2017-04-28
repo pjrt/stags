@@ -7,6 +7,8 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
+lazy val Benchmark = config("bench") extend Test
+
 lazy val libVersion = "0.1"
 
 lazy val commonSettings =
@@ -17,7 +19,11 @@ lazy val commonSettings =
     version := libVersion,
     scalacOptions in (Compile, console) ~=
       (_.filterNot(_ == "-Ywarn-unused-import")),
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    resolvers ++= Seq(
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases"
+    )
   )
 
 lazy val root =
@@ -28,8 +34,16 @@ lazy val stags =
   (project in file("stags"))
     .settings(commonSettings:_*)
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0"
-    )
+      libraryDependencies ++=
+        Seq(
+          "org.scalameta" %% "scalameta" % "1.6.0",
+          "com.storm-enroute" %% "scalameter" % "0.8.2" % "bench"
+        ),
+      testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"),
+      parallelExecution in Benchmark := false,
+      logBuffered := false)
+    .configs(Benchmark)
+    .settings(inConfig(Benchmark)(Defaults.testSettings):_*)
 
 lazy val cli =
   (project in file("cli"))
