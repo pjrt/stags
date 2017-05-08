@@ -26,7 +26,7 @@ lazy val root =
 
 lazy val stags =
   (project in file("stags"))
-    .settings(commonSettings:_*)
+    .settings(commonSettings: _*)
     .settings(
       libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0"
     )
@@ -34,7 +34,7 @@ lazy val stags =
 lazy val cli =
   (project in file("cli"))
     .dependsOn(stags % "compile->compile;test->test")
-    .settings(commonSettings:_*)
+    .settings(commonSettings: _*)
     .settings(
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),

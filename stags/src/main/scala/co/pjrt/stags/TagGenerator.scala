@@ -120,6 +120,8 @@ object TagGenerator {
       case p: Pat.Var.Term => Seq(tagsForMember(scope, mods, p))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
+      case Pat.Extract(_, _, pats) =>
+        pats.flatMap(getFromPat)
       case Pat.ExtractInfix(lhs, _, pats) =>
         getFromPat(lhs) ++ pats.flatMap(getFromPat)
     }
@@ -150,8 +152,7 @@ object TagGenerator {
           if (isCase) isStatic(Scope.empty, p.mods)
           else isStaticCtorParam(p)
         first.map(
-          p =>
-            ScopedTag(Scope.empty, p.name, firstIsStatic(p), p.name.pos)
+          p => ScopedTag(Scope.empty, p.name, firstIsStatic(p), p.name.pos)
         ) ++
           (for {
             pGroup <- rem
