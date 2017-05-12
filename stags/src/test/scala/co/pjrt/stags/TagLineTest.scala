@@ -179,7 +179,7 @@ class TagLineTest extends FreeSpec with Matchers {
         res shouldBe (Seq(t3, t2, t1))
       }
 
-      "_ (underscrop) should be after alphanum chars" in {
+      "_ (underscore) should be after alphanum chars" in {
         val t1 = mkTagFromIdent("_abc")
         val t2 = mkTagFromIdent("abc_de")
         val t3 = mkTagFromIdent("abc123_de")
