@@ -7,7 +7,7 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
-lazy val libVersion = "0.1"
+lazy val libVersion = "0.0.1"
 
 lazy val commonSettings =
   Seq(
@@ -33,11 +33,14 @@ lazy val stags =
 
 lazy val cli =
   (project in file("cli"))
+    .enablePlugins(BuildInfoPlugin)
     .dependsOn(stags % "compile->compile;test->test")
     .settings(commonSettings: _*)
     .settings(
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
+      buildInfoKeys := Seq[BuildInfoKey](version),
+      buildInfoPackage := "co.pjrt.stags.cli.build",
       assemblyJarName in assembly := s"stags-${version.value}",
       distLocation := (baseDirectory in assembly).value + "/dist/",
       dist := {

@@ -69,7 +69,7 @@ object Cli {
         "!_TAG_PROGRAM_AUTHOR	pedro@pjrt.co	//",
         "!_TAG_PROGRAM_NAME	stags",
         "!_TAG_PROGRAM_URL	https://github/pjrt/stags	/official site/",
-        "!_TAG_PROGRAM_VERSION	0.0.0"
+        s"!_TAG_PROGRAM_VERSION	${build.BuildInfo.version}"
       )
 
     try {
