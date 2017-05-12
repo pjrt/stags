@@ -9,6 +9,8 @@ lazy val distLocation = settingKey[String]("distLocation")
 
 lazy val libVersion = "0.0.1"
 
+lazy val Benchmark = config("bench") extend Test
+
 lazy val commonSettings =
   Seq(
     organization := "co.pjrt",
@@ -37,7 +39,13 @@ lazy val cli =
     .dependsOn(stags % "compile->compile;test->test")
     .settings(commonSettings: _*)
     .settings(
-      libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
+      libraryDependencies ++= Seq(
+        "com.github.scopt" %% "scopt" % "3.5.0",
+        "com.storm-enroute" %% "scalameter" % "0.8.2" % "bench"
+      ),
+      testFrameworks += new TestFramework("org.scalameter.ScalaMeterFramework"),
+      parallelExecution in Benchmark := false,
+      logBuffered := false,
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),
       buildInfoPackage := "co.pjrt.stags.cli.build",
@@ -66,6 +74,10 @@ lazy val cli =
         clean.value
         IO.delete(new File("dist"))
       }
+    ) configs(
+      Benchmark
+    ) settings(
+      inConfig(Benchmark)(Defaults.testSettings): _*
     )
 
 lazy val shFileContent = Def.task {
