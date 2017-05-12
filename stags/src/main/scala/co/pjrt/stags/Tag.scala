@@ -145,7 +145,7 @@ object TagLine {
   final def foldCaseSorting(tags: Seq[TagLine]): Seq[TagLine] = {
     implicit val sorting: Ordering[TagLine] =
       Ordering.fromLessThan(
-        (x, y) => x.tag.tagName.compareToIgnoreCase(y.tag.tagName) < 0
+        (x, y) => x.tag.tagName.toUpperCase < y.tag.tagName.toUpperCase
       )
 
     Sorting.stableSort(tags)(implicitly, sorting)

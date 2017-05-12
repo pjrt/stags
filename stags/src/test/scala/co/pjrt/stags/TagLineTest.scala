@@ -162,4 +162,30 @@ class TagLineTest extends FreeSpec with Matchers {
       }
     }
   }
+
+  def mkTagFromIdent(ident: String): TagLine = {
+    val t = Tag(ident, false, 0, 1)
+
+    val testFile = Path.fromString("TestFile.scala")
+    TagLine(t, testFile)
+  }
+  "ordering" - {
+    "foldcase" - {
+      "the order should be case insensitive" in {
+        val t1 = mkTagFromIdent("abcde2")
+        val t2 = mkTagFromIdent("aBcdE1")
+        val t3 = mkTagFromIdent("ABCD")
+        val res = TagLine.foldCaseSorting(Seq(t1, t2, t3))
+        res shouldBe (Seq(t3, t2, t1))
+      }
+
+      "_ (underscrop) should be after alphanum chars" in {
+        val t1 = mkTagFromIdent("_abc")
+        val t2 = mkTagFromIdent("abc_de")
+        val t3 = mkTagFromIdent("abc123_de")
+        val res = TagLine.foldCaseSorting(Seq(t1, t2, t3))
+        res shouldBe (Seq(t3, t2, t1))
+      }
+    }
+  }
 }
