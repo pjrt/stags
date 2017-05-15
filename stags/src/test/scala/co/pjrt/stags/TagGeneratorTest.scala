@@ -303,5 +303,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(Scope.empty, "x", true, 1, 25)
       )
     }
+
+    "underscore (_) vals should produce no tags" in {
+      val testFile =
+        s"""
+        |class SomeThing {
+        | val _ = 123
+        |}
+        """.stripMargin
+
+      val tags = TagGenerator.generateTags(testFile.parse[Source].get)
+      tags ~> Seq(
+        ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
+      )
+    }
   }
 }

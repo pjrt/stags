@@ -124,6 +124,9 @@ object TagGenerator {
         pats.flatMap(getFromPat)
       case Pat.ExtractInfix(lhs, _, pats) =>
         getFromPat(lhs) ++ pats.flatMap(getFromPat)
+      case Pat.Wildcard() =>
+        // DESNOTE(2017-05-15, pjrt): underscored vals are inaccesable
+        Seq.empty
     }
   }
 
