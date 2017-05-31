@@ -1,6 +1,9 @@
 package co.pjrt.stags
 
+import scala.meta._
+
 import org.scalatest.Matchers
+import org.scalactic.source.Position
 
 object Utils {
 
@@ -12,18 +15,17 @@ object Utils {
   def compareTags(
       actual: Seq[ScopedTag],
       expected: Seq[ScopedTag]
-    )(implicit limit: Int
+    )(implicit limit: Int,
+      pos: Position
     ): Unit = {
 
-    def toMap(s: Seq[ScopedTag]) =
-      s.map(
+    def toMap(s: Seq[ScopedTag]): Map[String, (Boolean, TagPosition)] =
+      s.flatMap(
           t =>
-            t.mkScopedTags(limit) -> (
-              (
-                t.tag.isStatic,
-                t.tag.row -> t.tag.column
-              )
-          )
+            t.mkScopedTags(limit)
+              .map(
+                _.tagName -> ((t.tag.isStatic, t.tag.row -> t.tag.column))
+            )
         )
         .toMap
     val aSize = actual.size
@@ -33,32 +35,45 @@ object Utils {
     else if (aSize < eSize)
       fail(s"Got less tags than expected $aSize < $eSize")
     else ()
-    val mActual: Map[Seq[Tag], (Boolean, TagPosition)] =
-      toMap(actual)
 
-    def testContent(t: (Boolean, TagPosition), t2: Tag) = {
-      val expectedContent = (t2.isStatic, t2.pos)
-      val actualContent = (t._1, t._2)
-      if (expectedContent == actualContent) ()
+    val mActual: Map[String, (Boolean, TagPosition)] = toMap(actual)
+
+    def testContent(
+        name: String,
+        actual: (Boolean, TagPosition),
+        expected: (Boolean, TagPosition)
+      ) = {
+      if (expected == actual) ()
       else
         fail(
-          s"Found tag `${t2.tagName}` but $actualContent /= $expectedContent"
+          s"Found tag `$name` but $actual /= $expected"
         )
     }
 
-    expected.foreach { e =>
-      mActual
-        .get(e.mkScopedTags(limit))
-        .map { c =>
-          testContent(c, e.tag)
-        }
-        .getOrElse(fail(s"Did not find `${e.mkScopedTags(limit)}`"))
+    toMap(expected).foreach {
+      case (k, v) =>
+        mActual
+          .get(k)
+          .map { c =>
+            testContent(k, c, v)
+          }
+          .getOrElse(fail(s"Did not find `$k`"))
     }
   }
 
-  implicit class SeqOfTagsOps(val actual: Seq[ScopedTag]) extends AnyVal {
+  implicit class SeqOfTagsOps(val testCode: String) extends AnyVal {
 
-    def ~>(expected: Seq[ScopedTag])(implicit limit: Int = 1): Unit =
-      compareTags(actual, expected)(limit)
+    def ~>(
+        expected: Seq[ScopedTag]
+      )(implicit limit: Int,
+        pos: Position
+      ): Unit = {
+      testCode.parse[Source] match {
+        case _: parsers.Parsed.Error => fail("Could not parse test code")
+        case parsers.Parsed.Success(parsed) =>
+          val actual = TagGenerator.generateTags(parsed)
+          compareTags(actual, expected)
+      }
+    }
   }
 }
