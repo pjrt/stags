@@ -95,7 +95,7 @@ object Tag {
 }
 
 /**
- * A [[TagLine]] is simple a [[Tag]] and a [[Path]]
+ * A [[TagLine]] is simple a [[Tag]] and a [[co.pjrt.stags.paths.Path]]
  *
  * It represents the final, file-representation of a tag.
  */
@@ -125,7 +125,7 @@ final case class TagLine(tag: Tag, filePath: Path) {
   }
 
   /**
-   * Modify the [[filePath]] to be relative to the given [[Path]]
+   * Modify the [[filePath]] to be relative to the given [[co.pjrt.stags.paths.Path]]
    */
   final def relativize(outputPath: Path): TagLine = {
     // DESNOTE(2017-04-04, pjrt) Due to the way `Paths.relativize` works, we

@@ -2,19 +2,11 @@
 
 ## Installation
 
+Using Coursier:
+
 ```bash
-git clone git@github.com:pjrt/stags.git
-cd stags
-./bin/install
+coursier bootstrap co.pjrt:stags-cli_2.12:0.1.0 -o stags
 ```
-
-This will install the cli in `~/.local/bin`. Make sure `~/.local/bin` is in
-your `$PATH`.
-
-Local installation simply creates a symlink to the repo's `dist` directory.
-If the repo is deleted or moved the link will break.
-
-I plan to eventually release via the normal channels (homebrew, etc).
 
 ## Usage
 

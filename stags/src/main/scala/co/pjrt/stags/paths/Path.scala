@@ -3,7 +3,7 @@ package co.pjrt.stags.paths
 import java.nio.file.{Path => NioPath, Paths}
 
 /**
- * A wrapper around [[java.nio.file.Path]] that ensures the path is absolute
+ * A wrapper around `java.nio.file.Path` that ensures the path is absolute
  * and normalized
  */
 class Path private (val nioPath: NioPath) {

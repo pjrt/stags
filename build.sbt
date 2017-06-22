@@ -7,7 +7,7 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
-lazy val libVersion = "0.0.1"
+lazy val libVersion = "0.1.0"
 
 lazy val commonSettings =
   Seq(
@@ -17,18 +17,16 @@ lazy val commonSettings =
     version := libVersion,
     scalacOptions in (Compile, console) ~=
       (_.filterNot(_ == "-Ywarn-unused-import")),
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
-  )
-
-lazy val root =
-  (project in file("."))
-    .aggregate(stags, cli)
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    useGpg := true
+  ) ++ publishInfo
 
 lazy val stags =
   (project in file("stags"))
     .settings(commonSettings: _*)
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0"
+      libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0",
+      publishSetting
     )
 
 lazy val cli =
@@ -37,6 +35,7 @@ lazy val cli =
     .dependsOn(stags % "compile->compile;test->test")
     .settings(commonSettings: _*)
     .settings(
+      name := "stags-cli",
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),
@@ -65,7 +64,16 @@ lazy val cli =
       distClean := {
         clean.value
         IO.delete(new File("dist"))
-      }
+      },
+      publishSetting
+    )
+
+def publishSetting =
+  publishTo := Some(
+    if (isSnapshot.value)
+      Opts.resolver.sonatypeSnapshots
+    else
+      Opts.resolver.sonatypeStaging
     )
 
 lazy val shFileContent = Def.task {
@@ -89,3 +97,28 @@ lazy val scalacOps = Seq(
   "-Ywarn-dead-code",
   "-Ypartial-unification"
 )
+
+lazy val publishInfo =
+  Seq(
+    sonatypeProfileName := "co.pjrt",
+
+    // To sync with Maven central, you need to supply the following information:
+    publishMavenStyle := true,
+
+    // License of your choice
+    licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
+    homepage := Some(url("https://github.com/pjrt/stags")),
+    scmInfo := Some(
+      ScmInfo(
+        url("https://github.com/pjrt/stags"),
+        "scm:git@github.com:pjrt/stags.git"
+      )
+    ),
+    developers := List(
+      Developer(
+        id="pjrt",
+        name="Pedro J Rodriguez Tavarez",
+        email="pedro@pjrt.co",
+        url=url("http://www.pjrt.co/"))
+    )
+  )

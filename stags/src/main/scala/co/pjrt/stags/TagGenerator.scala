@@ -9,7 +9,7 @@ import co.pjrt.stags.paths.Path
 object TagGenerator {
 
   /**
-   * Given some [[Source]] code, generate a sequence of [[Tag]]s for it
+   * Given a Scalameta Source, generate a sequence of [[Tag]]s for it
    */
   def generateTags(source: Source): Seq[ScopedTag] =
     source.stats.flatMap(tagsForTopLevel(_))
