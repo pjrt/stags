@@ -7,7 +7,7 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
-lazy val libVersion = "0.1.0"
+lazy val libVersion = "0.1.1"
 
 lazy val commonSettings =
   Seq(

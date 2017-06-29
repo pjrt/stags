@@ -32,7 +32,10 @@ object Config {
     scopt.Zero.zero(Config(Seq.empty, None, 1))
 
   final val parser = new scopt.OptionParser[Config]("stags") {
-    head("stags", "0.0.1")
+    head("stags", build.BuildInfo.version)
+
+    help("help")
+    version("version")
 
     arg[File]("<file>...")
       .required()
