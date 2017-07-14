@@ -71,6 +71,13 @@ lazy val cli =
       publishSetting
     )
 
+lazy val root = project
+  .aggregate(stags, cli)
+  .settings(
+    // Don't publish useless root artifacts
+    packagedArtifacts := Map.empty
+  )
+
 def publishSetting =
   publishTo := Some(
     if (isSnapshot.value)
@@ -140,6 +147,3 @@ def releaseProcessDef = Seq[ReleaseStep](
   ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
   pushChanges
 )
-
-// Don't publish useless root artifacts
-packagedArtifacts in file(".") := Map.empty
