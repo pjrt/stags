@@ -147,5 +147,3 @@ def releaseProcessDef = Seq[ReleaseStep](
   ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
   pushChanges
 )
-
-packagedArtifacts in file(".") := Map.empty
