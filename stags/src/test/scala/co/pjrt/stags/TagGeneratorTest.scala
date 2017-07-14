@@ -250,62 +250,49 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-  "Odd cases" - {
-    "pat extractions" in {
-      val testFile =
-        s"""
-        |object Odd {
-        | val (d41: Token) +: (d42: Seq[Token]) :+ (d43: Token) = d
-        | val Some((id: Int, v: String)) = k
-        }
-        """.stripMargin
+  "Should extract pattern extractions" in {
+    val testFile =
+      s"""
+      |object Odd {
+      | val (d41: Token) +: (d42: Seq[Token]) :+ (d43: Token) = d
+      | val Some((id: Int, v: String)) = k
+      | val List(1, 2, x @ _*) = List(1, 2, 3, 4)
+      }
+      """.stripMargin
 
-      testFile ~> Seq(
-        ScopedTag(Scope.empty, "Odd", false, 1, 7),
-        ScopedTag(Scope(Seq("Odd")), "id", false, 3, 11),
-        ScopedTag(Scope(Seq("Odd")), "v", false, 3, 20),
-        ScopedTag(Scope(Seq("Odd")), "d41", false, 2, 6),
-        ScopedTag(Scope(Seq("Odd")), "d42", false, 2, 22),
-        ScopedTag(Scope(Seq("Odd")), "d43", false, 2, 43)
-      )
-    }
+    testFile ~> Seq(
+      ScopedTag(Scope.empty, "Odd", false, 1, 7),
+      ScopedTag(Scope(Seq("Odd")), "d41", false, 2, 6),
+      ScopedTag(Scope(Seq("Odd")), "d42", false, 2, 22),
+      ScopedTag(Scope(Seq("Odd")), "d43", false, 2, 43),
+      ScopedTag(Scope(Seq("Odd")), "id", false, 3, 11),
+      ScopedTag(Scope(Seq("Odd")), "v", false, 3, 20),
+      ScopedTag(Scope(Seq("Odd")), "x", false, 4, 16)
+    )
+  }
 
-    "implicit class value should be static" in {
-      val testFile =
-        s"""
-        |implicit class Class(val x: Int) { }
-        """.stripMargin
+  "Should produce a static tag for the value in an implicit class" in {
+    val testFile =
+      s"""
+      |implicit class Class(val x: Int) { }
+      """.stripMargin
 
-      testFile ~> Seq(
-        ScopedTag(Scope.empty, "Class", false, 1, 15),
-        ScopedTag(Scope.empty, "x", true, 1, 25)
-      )
-    }
+    testFile ~> Seq(
+      ScopedTag(Scope.empty, "Class", false, 1, 15),
+      ScopedTag(Scope.empty, "x", true, 1, 25)
+    )
+  }
 
-    "underscore (_) vals should produce no tags" in {
-      val testFile =
-        s"""
-        |class SomeThing {
-        | val _ = 123
-        |}
-        """.stripMargin
+  "Should NOT produce a tag for underscore (_) vals" in {
+    val testFile =
+      s"""
+      |class SomeThing {
+      | val _ = 123
+      |}
+      """.stripMargin
 
-      testFile ~> Seq(
-        ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
-      )
-    }
-
-    "Lit pat and Pat.Bind" in {
-      val testFile =
-        s"""
-        |class SomeThing {
-        | val List(1, 2, x @ _*) = List(1, 2, 3, 4)
-        |}
-        """.stripMargin
-      testFile ~> Seq(
-        ScopedTag(Scope.empty, "SomeThing", false, 1, 6),
-        ScopedTag(Scope.empty, "x", false, 2, 16)
-      )
-    }
+    testFile ~> Seq(
+      ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
+    )
   }
 }

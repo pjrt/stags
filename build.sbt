@@ -3,6 +3,8 @@ import java.nio.file.attribute.{PosixFilePermission => Perm}
 
 import scala.collection.JavaConverters._
 
+import ReleaseTransformations._
+
 lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
@@ -122,3 +124,20 @@ lazy val publishInfo =
         url=url("http://www.pjrt.co/"))
     )
   )
+
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  ReleaseStep(action = Command.process("publishSigned", _)),
+  setNextVersion,
+  commitNextVersion,
+  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+  pushChanges
+)
+
+packagedArtifacts in file(".") := Map.empty
