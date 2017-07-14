@@ -9,18 +9,16 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
-lazy val libVersion = "0.2.0"
-
 lazy val commonSettings =
   Seq(
     organization := "co.pjrt",
     scalaVersion := "2.12.2",
     scalacOptions := scalacOps,
-    version := libVersion,
     scalacOptions in (Compile, console) ~=
       (_.filterNot(_ == "-Ywarn-unused-import")),
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    useGpg := true
+    useGpg := true,
+    releaseProcess := releaseProcessDef
   ) ++ publishInfo
 
 lazy val stags =
@@ -69,6 +67,13 @@ lazy val cli =
       },
       publishSetting
     )
+
+lazy val root = (project in file("."))
+  .aggregate(stags, cli)
+  .settings(
+    // Don't publish useless root artifacts
+    packagedArtifacts := Map.empty
+  )
 
 def publishSetting =
   publishTo := Some(
@@ -125,7 +130,7 @@ lazy val publishInfo =
     )
   )
 
-releaseProcess := Seq[ReleaseStep](
+def releaseProcessDef = Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
   runClean,
@@ -139,5 +144,3 @@ releaseProcess := Seq[ReleaseStep](
   ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
   pushChanges
 )
-
-packagedArtifacts in file(".") := Map.empty
