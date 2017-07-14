@@ -294,5 +294,18 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
       )
     }
+
+    "Lit pat and Pat.Bind" in {
+      val testFile =
+        s"""
+        |class SomeThing {
+        | val List(1, 2, x @ _*) = List(1, 2, 3, 4)
+        |}
+        """.stripMargin
+      testFile ~> Seq(
+        ScopedTag(Scope.empty, "SomeThing", false, 1, 6),
+        ScopedTag(Scope.empty, "x", false, 2, 16)
+      )
+    }
   }
 }

@@ -127,6 +127,12 @@ object TagGenerator {
       case Pat.Wildcard() =>
         // DESNOTE(2017-05-15, pjrt): underscored vals are inaccesable
         Seq.empty
+      case Pat.Bind(lhs, rhs) =>
+        getFromPat(lhs)
+      case _: Lit =>
+        // DESNOTE(2017-07-14, pjrt): This is for patterns like `val 1 = x`
+        // For those, we should not generate tags (of course)
+        Seq.empty
     }
   }
 
