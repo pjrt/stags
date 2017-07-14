@@ -20,7 +20,8 @@ lazy val commonSettings =
     scalacOptions in (Compile, console) ~=
       (_.filterNot(_ == "-Ywarn-unused-import")),
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    useGpg := true
+    useGpg := true,
+    releaseProcess := releaseProcessDef
   ) ++ publishInfo
 
 lazy val stags =
@@ -125,7 +126,7 @@ lazy val publishInfo =
     )
   )
 
-releaseProcess := Seq[ReleaseStep](
+def releaseProcessDef = Seq[ReleaseStep](
   checkSnapshotDependencies,
   inquireVersions,
   runClean,
@@ -140,4 +141,5 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
+// Don't publish useless root artifacts
 packagedArtifacts in file(".") := Map.empty
