@@ -7,7 +7,7 @@ lazy val dist = taskKey[Unit]("dist")
 lazy val distClean = taskKey[Unit]("distClean")
 lazy val distLocation = settingKey[String]("distLocation")
 
-lazy val libVersion = "0.1.1"
+lazy val libVersion = "0.2.0"
 
 lazy val commonSettings =
   Seq(
@@ -25,7 +25,7 @@ lazy val stags =
   (project in file("stags"))
     .settings(commonSettings: _*)
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "1.6.0",
+      libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0",
       publishSetting
     )
 
