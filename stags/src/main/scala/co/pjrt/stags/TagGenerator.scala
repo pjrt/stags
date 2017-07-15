@@ -124,7 +124,7 @@ object TagGenerator {
         pats.flatMap(getFromPat)
       case Pat.ExtractInfix(lhs, _, pats) =>
         getFromPat(lhs) ++ pats.flatMap(getFromPat)
-      case Pat.Wildcard() =>
+      case Pat.Wildcard() | Pat.Arg.SeqWildcard() =>
         // DESNOTE(2017-05-15, pjrt): underscored vals are inaccesable
         Seq.empty
       case Pat.Bind(lhs, rhs) =>

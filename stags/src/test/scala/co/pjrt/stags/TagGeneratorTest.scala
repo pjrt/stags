@@ -257,6 +257,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | val (d41: Token) +: (d42: Seq[Token]) :+ (d43: Token) = d
       | val Some((id: Int, v: String)) = k
       | val List(1, 2, x @ _*) = List(1, 2, 3, 4)
+      | val Seq(1, 2, _*) = Seq(1, 2, 3, 4)
       }
       """.stripMargin
 
