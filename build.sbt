@@ -70,6 +70,7 @@ lazy val cli =
 
 lazy val root = (project in file("."))
   .aggregate(stags, cli)
+  .settings(publishInfo: _*)
   .settings(
     // Don't publish useless root artifacts
     packagedArtifacts := Map.empty
