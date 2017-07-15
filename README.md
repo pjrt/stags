@@ -5,7 +5,7 @@
 Using Coursier:
 
 ```bash
-coursier bootstrap co.pjrt:stags-cli_2.12:0.2.1 -o stags
+coursier bootstrap co.pjrt:stags-cli_2.12:0.2.2 -o stags
 ```
 
 ## Usage
