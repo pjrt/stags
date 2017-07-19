@@ -53,9 +53,9 @@ object TagGenerator {
   private def generatePackageScope(ref: Term.Ref): Scope = {
     def loop(r: Term, acc: Seq[String]): Seq[String] =
       r match {
-        case name: Term.Name => acc :+ name.value
+        case name: Term.Name     => acc :+ name.value
         case select: Term.Select => loop(select.qual, acc :+ select.name.value)
-        case _ => acc
+        case _                   => acc
       }
     Scope(loop(ref, Seq.empty))
   }
@@ -67,9 +67,9 @@ object TagGenerator {
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
-      case d: Defn.Def => Seq(tagsForMember(scope, d.mods, d))
-      case d: Defn.Val => d.pats.flatMap(getFromPats(scope, d.mods, _))
-      case d: Decl.Val => d.pats.flatMap(getFromPats(scope, d.mods, _))
+      case d: Defn.Def  => Seq(tagsForMember(scope, d.mods, d))
+      case d: Defn.Val  => d.pats.flatMap(getFromPats(scope, d.mods, _))
+      case d: Decl.Val  => d.pats.flatMap(getFromPats(scope, d.mods, _))
       case d: Defn.Type => Seq(tagsForMember(scope, d.mods, d))
       case d: Decl.Type => Seq(tagsForMember(scope, d.mods, d))
 
@@ -184,9 +184,9 @@ object TagGenerator {
   private def isStatic(prefix: Scope, mods: Seq[Mod]): Boolean =
     mods
       .collect {
-        case Mod.Private(Name.Anonymous()) => true
+        case Mod.Private(Name.Anonymous())            => true
         case Mod.Private(Term.This(Name.Anonymous())) => true
-        case Mod.Private(Name.Indeterminate(name)) =>
+        case Mod.Private(Name.Indeterminate(name))    =>
           // DESNOTE(2017-03-21, pjrt): If the name of the private thing
           // is the parent object, then it is just private.
           if (name == "this" || prefix.localContains(name))

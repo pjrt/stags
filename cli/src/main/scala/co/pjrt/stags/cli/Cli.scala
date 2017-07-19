@@ -56,8 +56,8 @@ object Cli {
   private def fetchFilesFromDir(dir: File): Seq[File] =
     dir.listFiles.foldLeft(Seq.empty[File]) {
       case (acc, f) if (f.isDirectory) => acc ++ fetchFilesFromDir(f)
-      case (acc, f) if isScalaFile(f) => acc :+ f
-      case (acc, _) => acc
+      case (acc, f) if isScalaFile(f)  => acc :+ f
+      case (acc, _)                    => acc
     }
 
   private def writeFile(file: File, lines: Seq[String]): Unit = {

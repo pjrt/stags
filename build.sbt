@@ -82,7 +82,7 @@ def publishSetting =
       Opts.resolver.sonatypeSnapshots
     else
       Opts.resolver.sonatypeStaging
-    )
+  )
 
 lazy val shFileContent = Def.task {
   s"""#!/bin/sh
@@ -109,10 +109,8 @@ lazy val scalacOps = Seq(
 lazy val publishInfo =
   Seq(
     sonatypeProfileName := "co.pjrt",
-
     // To sync with Maven central, you need to supply the following information:
     publishMavenStyle := true,
-
     // License of your choice
     licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
     homepage := Some(url("https://github.com/pjrt/stags")),
@@ -124,10 +122,11 @@ lazy val publishInfo =
     ),
     developers := List(
       Developer(
-        id="pjrt",
-        name="Pedro J Rodriguez Tavarez",
-        email="pedro@pjrt.co",
-        url=url("http://www.pjrt.co/"))
+        id = "pjrt",
+        name = "Pedro J Rodriguez Tavarez",
+        email = "pedro@pjrt.co",
+        url = url("http://www.pjrt.co/")
+      )
     )
   )
 

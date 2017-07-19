@@ -306,9 +306,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |}
       """.stripMargin
 
-      testFile ~> Seq(
-        ScopedTag(Scope.empty, "SomeThing", false, 2, 7),
-        ScopedTag(Scope(Seq("SomeThing")), "some", false, 3, 6)
-      )
+    testFile ~> Seq(
+      ScopedTag(Scope.empty, "SomeThing", false, 2, 7),
+      ScopedTag(Scope(Seq("SomeThing")), "some", false, 3, 6)
+    )
   }
 }

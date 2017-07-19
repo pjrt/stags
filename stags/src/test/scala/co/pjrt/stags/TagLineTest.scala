@@ -13,13 +13,13 @@ class TagLineTest extends FreeSpec with Matchers {
 
   def priv(scope: Option[String]) =
     scope match {
-      case None => Private(Anonymous())
+      case None    => Private(Anonymous())
       case Some(n) => Private(Indeterminate(n))
     }
 
   def prod(scope: Option[String]) =
     scope match {
-      case None => Protected(Anonymous())
+      case None    => Protected(Anonymous())
       case Some(n) => Protected(Indeterminate(n))
     }
 
