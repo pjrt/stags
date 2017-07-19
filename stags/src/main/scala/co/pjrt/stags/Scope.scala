@@ -12,7 +12,7 @@ final case class Scope(packageScope: Seq[String], localScope: Seq[String]) {
 
   final def addLocal(name: Term.Name): Scope = addLocal(name.value)
 
-  final def toSeq: Seq[String] = packageScope ++ localScope
+  final def toSeq: Seq[String] = localScope ++ packageScope
 
   final def localContains(name: String): Boolean =
     localScope.contains(name)

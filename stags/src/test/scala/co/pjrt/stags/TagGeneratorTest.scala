@@ -296,4 +296,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
     )
   }
+
+  "qualified tags for objects should work with explicit packages" in {
+    val testFile =
+      """
+      |package a.b.c.d
+      |object SomeThing {
+      |  def some: Int = {}
+      |}
+      """.stripMargin
+
+      testFile ~> Seq(
+        ScopedTag(Scope.empty, "SomeThing", false, 2, 7),
+        ScopedTag(Scope(Seq("SomeThing")), "some", false, 3, 6)
+      )
+  }
 }
