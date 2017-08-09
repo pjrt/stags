@@ -63,6 +63,15 @@ object TagGenerator {
   private def tagsForStatement(scope: Scope, child: Stat): Seq[ScopedTag] = {
 
     child match {
+      // DESNOTE(2017-08-09, pjrt): This means we have reached another package
+      // statement in the same file. Though rare, it is possible. What should
+      // happen in this case is that this package statement should merge
+      // with the package statement above
+      case pkg: Pkg =>
+        val thisPkgScope = generatePackageScope(pkg.ref)
+        val newPackageScope = thisPkgScope.packageScope ++ scope.packageScope
+        val newScope = Scope(newPackageScope, scope.localScope)
+        pkg.stats.flatMap(tagsForStatement(newScope, _))
       // DESNOTE(2017-03-15, pjrt) There doesn't seem to be a way to
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336

@@ -6,10 +6,10 @@ import Utils._
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
-  def abc(q: String*): Scope = Scope(Seq("c", "b", "a"), q.toSeq)
+  def abc(q: String*): Scope = Scope(Seq("c", "b", "a"), q.reverse.toSeq)
 
   // TODO should test against other limits
-  implicit val limit: Int = 1
+  implicit val limit: Int = 10
 
   "Should generate unqualified tags for classes" in {
     val testFile =
@@ -120,6 +120,29 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
+  "should work for multiple packages being defined in the same file" in {
+    val testFile =
+      """
+      |package a.b.c
+      |
+      |package test.some {
+      | class X
+      |}
+      |package test2.some2 {
+      | class X2
+      | package inner.pack {
+      |   class InnerX
+      | }
+      |}
+      """.stripMargin
+
+    testFile ~> List(
+      ScopedTag(abc("test", "some"), "X", false, 4, 7),
+      ScopedTag(abc("test2", "some2"), "X2", false, 7, 7),
+      ScopedTag(abc("test2", "some2", "inner", "pack"), "InnerX", false, 9, 9)
+    )
+  }
+
   "Should capture modifiers and generate the correct isStatic" in {
     val testFile =
       """
@@ -142,14 +165,14 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(abc(), "SomeObject", false, 3, 7),
         ScopedTag(abc("SomeObject"), "InnerObject", false, 4, 19),
         ScopedTag(
-          abc("InnerObject", "SomeObject"),
+          abc("SomeObject", "InnerObject"),
           "privateHello",
           true,
           5,
           15
         ),
         ScopedTag(
-          abc("InnerObject", "SomeObject"),
+          abc("SomeObject", "InnerObject"),
           "publicHello",
           false,
           6,
@@ -181,7 +204,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(abc(), "SomeObject", false, 3, 7),
         ScopedTag(abc("SomeObject"), "InnerObject", true, 4, 28),
         ScopedTag(
-          abc("InnerObject", "SomeObject"),
+          abc("SomeObject", "InnerObject"),
           "publicHello",
           false,
           5,
