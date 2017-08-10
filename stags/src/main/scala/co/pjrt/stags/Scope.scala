@@ -7,16 +7,15 @@ import scala.meta.Term
  */
 final case class Scope(packageScope: Seq[String], localScope: Seq[String]) {
 
-  final def addLocal(name: String): Scope =
+  def addLocal(name: String): Scope =
     Scope(packageScope, name +: localScope)
 
-  final def addLocal(name: Term.Name): Scope = addLocal(name.value)
+  def addLocal(name: Term.Name): Scope = addLocal(name.value)
 
-  final def toSeq: Seq[String] = localScope ++ packageScope
+  def toSeq: Seq[String] = localScope ++ packageScope
 
-  final def localContains(name: String): Boolean =
+  def localContains(name: String): Boolean =
     localScope.contains(name)
-
 }
 
 object Scope {

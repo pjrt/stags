@@ -44,9 +44,9 @@ object TagGenerator {
         // statement is found at the top, then that means EVERYTHING will be a
         // child of it.
         val packageScope = generatePackageScope(obj.ref)
-        obj.stats.flatMap(tagsForStatement(packageScope, _))
+        obj.stats.flatMap(tagsForStatement(packageScope, _, false))
       case st =>
-        tagsForStatement(Scope.empty, st)
+        tagsForStatement(Scope.empty, st, false)
     }
   }
 
@@ -60,7 +60,14 @@ object TagGenerator {
     Scope(loop(ref, Seq.empty))
   }
 
-  private def tagsForStatement(scope: Scope, child: Stat): Seq[ScopedTag] = {
+  private def tagsForStatement(
+      scope: Scope,
+      child: Stat,
+      forceChildrenToStatic: Boolean
+    ): Seq[ScopedTag] = {
+
+    def getStatic(mods: Seq[Mod]) =
+      forceChildrenToStatic || isStatic(scope, mods)
 
     child match {
       // DESNOTE(2017-08-09, pjrt): This means we have reached another package
@@ -71,32 +78,39 @@ object TagGenerator {
         val thisPkgScope = generatePackageScope(pkg.ref)
         val newPackageScope = thisPkgScope.packageScope ++ scope.packageScope
         val newScope = Scope(newPackageScope, scope.localScope)
-        pkg.stats.flatMap(tagsForStatement(newScope, _))
+        pkg.stats.flatMap(tagsForStatement(newScope, _, false))
       // DESNOTE(2017-03-15, pjrt) There doesn't seem to be a way to
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
-      case d: Defn.Def  => Seq(tagsForMember(scope, d.mods, d))
-      case d: Defn.Val  => d.pats.flatMap(getFromPats(scope, d.mods, _))
-      case d: Decl.Val  => d.pats.flatMap(getFromPats(scope, d.mods, _))
-      case d: Defn.Type => Seq(tagsForMember(scope, d.mods, d))
-      case d: Decl.Type => Seq(tagsForMember(scope, d.mods, d))
+      case d: Defn.Def => Seq(tagsForMember(scope, d, getStatic(d.mods)))
+      case d: Defn.Val =>
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+      case d: Decl.Val =>
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+      case d: Defn.Type => Seq(tagsForMember(scope, d, getStatic(d.mods)))
+      case d: Decl.Type => Seq(tagsForMember(scope, d, getStatic(d.mods)))
 
       case d: Defn.Object =>
-        tagsForMember(scope, d.mods, d) +:
+        val newScope = scope.addLocal(d.name)
+        val static = getStatic(d.mods)
+        tagsForMember(scope, d, static) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(scope.addLocal(d.name), _)))
+          .map(_.flatMap(tagsForStatement(newScope, _, static)))
           .getOrElse(Nil)
       case d: Pkg.Object =>
-        tagsForMember(scope, d.mods, d) +:
+        val newScope = scope.addLocal(d.name)
+        val static = getStatic(d.mods)
+        tagsForMember(scope, d, static) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(scope.addLocal(d.name), _)))
+          .map(_.flatMap(tagsForStatement(newScope, _, static)))
           .getOrElse(Nil)
 
       case d: Defn.Trait =>
-        tagsForMember(scope, d.mods, d) +:
+        val static = getStatic(d.mods)
+        tagsForMember(scope, d, static) +:
           d.templ.stats
-          .map(_.flatMap(tagsForStatement(Scope.empty, _)))
+          .map(_.flatMap(tagsForStatement(Scope.empty, _, static)))
           .getOrElse(Nil)
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
@@ -109,9 +123,10 @@ object TagGenerator {
           else
             tagsForCtorParams(d.isCaseClass, d.ctor.paramss)
 
-        (tagsForMember(scope, d.mods, d) +: ctorParamTags) ++
+        val static = getStatic(d.mods)
+        (tagsForMember(scope, d, static) +: ctorParamTags) ++
           d.templ.stats
-            .map(_.flatMap(tagsForStatement(Scope.empty, _)))
+            .map(_.flatMap(tagsForStatement(Scope.empty, _, static)))
             .getOrElse(Nil)
 
       case _ => Seq.empty
@@ -121,12 +136,14 @@ object TagGenerator {
   private def getFromPats(
       scope: Scope,
       mods: Seq[Mod],
-      pat: Pat.Arg
+      pat: Pat.Arg,
+      staticParent: Boolean
     ): Seq[ScopedTag] = {
 
-    def getFromPat(p: Pat.Arg) = getFromPats(scope, mods, p)
+    val static = staticParent || isStatic(scope, mods)
+    def getFromPat(p: Pat.Arg) = getFromPats(scope, mods, p, staticParent)
     pat match {
-      case p: Pat.Var.Term => Seq(tagsForMember(scope, mods, p))
+      case p: Pat.Var.Term => Seq(tagsForMember(scope, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
       case Pat.Extract(_, _, pats) =>
@@ -145,9 +162,8 @@ object TagGenerator {
     }
   }
 
-  private def tagsForMember(scope: Scope, mods: Seq[Mod], term: Member) = {
+  private def tagsForMember(scope: Scope, term: Member, static: Boolean) = {
 
-    val static = isStatic(scope, mods)
     ScopedTag(scope, term.name, static, term.name.pos)
   }
 

@@ -197,6 +197,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |sealed trait SealedTrait {
       |  private[this] def protectedHello(name: String) = name
       |}
+      |private class PrivateClass {
+      |  val x = 1
+      |  def y = 1
+      |}
       """.stripMargin
 
     testFile ~>
@@ -206,12 +210,15 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(
           abc("SomeObject", "InnerObject"),
           "publicHello",
-          false,
+          true,
           5,
           7
         ),
         ScopedTag(abc(), "SealedTrait", false, 8, 13),
-        ScopedTag(Scope.empty, "protectedHello", true, 9, 20)
+        ScopedTag(Scope.empty, "protectedHello", true, 9, 20),
+        ScopedTag(abc(), "PrivateClass", true, 11, 14),
+        ScopedTag(Scope.empty, "x", true, 12, 6),
+        ScopedTag(Scope.empty, "y", true, 13, 6)
       )
   }
 
