@@ -5,10 +5,6 @@ import scala.collection.JavaConverters._
 
 import ReleaseTransformations._
 
-lazy val dist = taskKey[Unit]("dist")
-lazy val distClean = taskKey[Unit]("distClean")
-lazy val distLocation = settingKey[String]("distLocation")
-
 lazy val commonSettings =
   Seq(
     organization := "co.pjrt",
@@ -41,30 +37,6 @@ lazy val cli =
       buildInfoKeys := Seq[BuildInfoKey](version),
       buildInfoPackage := "co.pjrt.stags.cli.build",
       assemblyJarName in assembly := s"stags-${version.value}",
-      distLocation := (baseDirectory in assembly).value + "/dist/",
-      dist := {
-        assembly.value
-        val jar = (assemblyOutputPath in assembly).value
-        val distLoc = distLocation.value
-        val libLoc = distLoc + "lib/" + (assemblyJarName in assembly).value
-        val target = new File(libLoc)
-        val shFilePath = distLoc + "bin/stags"
-        IO.copyFile(jar, target)
-        IO.write(new File(shFilePath), shFileContent.value.getBytes)
-        val perms =
-          Set(
-            Perm.OWNER_EXECUTE,
-            Perm.OWNER_READ,
-            Perm.OWNER_WRITE,
-            Perm.GROUP_READ,
-            Perm.OTHERS_READ
-          ).asJava
-        Files.setPosixFilePermissions(Paths.get(shFilePath), perms)
-      },
-      distClean := {
-        clean.value
-        IO.delete(new File("dist"))
-      },
       publishSetting
     )
 
@@ -83,11 +55,6 @@ def publishSetting =
     else
       Opts.resolver.sonatypeStaging
   )
-
-lazy val shFileContent = Def.task {
-  s"""#!/bin/sh
-  |java -jar ${(baseDirectory in assembly).value}/dist/lib/${(assemblyJarName in assembly).value} $$@""".stripMargin
-}
 
 lazy val scalacOps = Seq(
   "-deprecation",
@@ -138,9 +105,11 @@ def releaseProcessDef = Seq[ReleaseStep](
   setReleaseVersion,
   commitReleaseVersion,
   tagRelease,
-  ReleaseStep(action = Command.process("publishSigned", _)),
+  ReleaseStep(action = Command.process("stags/publishSigned", _)),
+  ReleaseStep(action = Command.process("cli/publishSigned", _)),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+  ReleaseStep(action = Command.process("stags/sonatypeReleaseAll", _)),
+  ReleaseStep(action = Command.process("cli/sonatypeReleaseAll", _)),
   pushChanges
 )
