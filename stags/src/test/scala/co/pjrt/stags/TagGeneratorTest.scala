@@ -42,6 +42,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       | type Undefined <: SomeUpper
       | val defined1, defined2 = "hello"
       | val undefined: String
+      | var undefined2: String
       |}
       """.stripMargin
 
@@ -52,7 +53,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       ScopedTag(Scope.empty, "Undefined", false, 6, 6),
       ScopedTag(Scope.empty, "defined1", false, 7, 5),
       ScopedTag(Scope.empty, "defined2", false, 7, 15),
-      ScopedTag(Scope.empty, "undefined", false, 8, 5)
+      ScopedTag(Scope.empty, "undefined", false, 8, 5),
+      ScopedTag(Scope.empty, "undefined2", false, 9, 5)
     )
   }
 
@@ -200,6 +202,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |private class PrivateClass {
       |  val x = 1
       |  def y = 1
+      |  var z = 1
       |}
       """.stripMargin
 
@@ -218,7 +221,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         ScopedTag(Scope.empty, "protectedHello", true, 9, 20),
         ScopedTag(abc(), "PrivateClass", true, 11, 14),
         ScopedTag(Scope.empty, "x", true, 12, 6),
-        ScopedTag(Scope.empty, "y", true, 13, 6)
+        ScopedTag(Scope.empty, "y", true, 13, 6),
+        ScopedTag(Scope.empty, "z", true, 14, 6)
       )
   }
 
