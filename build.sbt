@@ -109,7 +109,6 @@ def releaseProcessDef = Seq[ReleaseStep](
   ReleaseStep(action = Command.process("cli/publishSigned", _)),
   setNextVersion,
   commitNextVersion,
-  ReleaseStep(action = Command.process("stags/sonatypeReleaseAll", _)),
-  ReleaseStep(action = Command.process("cli/sonatypeReleaseAll", _)),
+  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
   pushChanges
 )
