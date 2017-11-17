@@ -84,11 +84,12 @@ object TagGenerator {
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
       case d: Defn.Def => Seq(tagsForMember(scope, d, getStatic(d.mods)))
+      case d: Decl.Def => Seq(tagsForMember(scope, d, getStatic(d.mods)))
       case d: Defn.Val =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
-      case d: Defn.Var =>
-        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
       case d: Decl.Val =>
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+      case d: Defn.Var =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
       case d: Decl.Var =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))

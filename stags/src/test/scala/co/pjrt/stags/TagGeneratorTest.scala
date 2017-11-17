@@ -345,4 +345,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       ScopedTag(Scope(Seq("SomeThing")), "some", false, 3, 6)
     )
   }
+
+  "Decl defs should create tags" in {
+    val testFile =
+      """
+      |package a.b.c.d
+      |trait TraitA {
+      |  def declDef: Int
+      |}
+      """.stripMargin
+
+    testFile ~> Seq(
+      ScopedTag(Scope.empty, "TraitA", false, 2, 6),
+      ScopedTag(Scope.empty, "declDef", false, 3, 6)
+    )
+  }
 }
