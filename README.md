@@ -8,6 +8,12 @@ Using Coursier:
 coursier bootstrap co.pjrt:stags-cli_2.12:0.2.6 -o stags
 ```
 
+If you want to use `stags` tag generation as a library, you can add it to sbt with:
+
+```
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.2.6"
+```
+
 ## Usage
 
 ```bash
