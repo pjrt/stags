@@ -78,8 +78,8 @@ object Tag {
     Tag(
       tokenName.value,
       isStatic,
-      pos.start.line,
-      pos.start.column
+      pos.startLine,
+      pos.startColumn
     )
   }
 
@@ -88,8 +88,8 @@ object Tag {
     Tag(
       tokenName,
       isStatic,
-      pos.start.line,
-      pos.start.column
+      pos.startLine,
+      pos.startColumn
     )
   }
 }

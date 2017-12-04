@@ -21,7 +21,7 @@ lazy val stags =
   (project in file("stags"))
     .settings(commonSettings: _*)
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "1.8.0",
+      libraryDependencies += "org.scalameta" %% "scalameta" % "2.1.2",
       publishSetting
     )
 

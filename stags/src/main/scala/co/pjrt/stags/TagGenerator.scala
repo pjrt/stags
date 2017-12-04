@@ -100,23 +100,17 @@ object TagGenerator {
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
         tagsForMember(scope, d, static) +:
-          d.templ.stats
-          .map(_.flatMap(tagsForStatement(newScope, _, static)))
-          .getOrElse(Nil)
+          d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
       case d: Pkg.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
         tagsForMember(scope, d, static) +:
-          d.templ.stats
-          .map(_.flatMap(tagsForStatement(newScope, _, static)))
-          .getOrElse(Nil)
+          d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
 
       case d: Defn.Trait =>
         val static = getStatic(d.mods)
         tagsForMember(scope, d, static) +:
-          d.templ.stats
-          .map(_.flatMap(tagsForStatement(Scope.empty, _, static)))
-          .getOrElse(Nil)
+          d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
           if (d.isImplicitClass)
@@ -130,9 +124,7 @@ object TagGenerator {
 
         val static = getStatic(d.mods)
         (tagsForMember(scope, d, static) +: ctorParamTags) ++
-          d.templ.stats
-            .map(_.flatMap(tagsForStatement(Scope.empty, _, static)))
-            .getOrElse(Nil)
+          d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
 
       case _ => Seq.empty
     }
@@ -141,21 +133,21 @@ object TagGenerator {
   private def getFromPats(
       scope: Scope,
       mods: Seq[Mod],
-      pat: Pat.Arg,
+      pat: Pat,
       staticParent: Boolean
     ): Seq[ScopedTag] = {
 
     val static = staticParent || isStatic(scope, mods)
-    def getFromPat(p: Pat.Arg) = getFromPats(scope, mods, p, staticParent)
+    def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent)
     pat match {
-      case p: Pat.Var.Term => Seq(tagsForMember(scope, p, static))
+      case p: Pat.Var      => Seq(tagsForMember(scope, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
-      case Pat.Extract(_, _, pats) =>
+      case Pat.Extract(_, pats) =>
         pats.flatMap(getFromPat)
       case Pat.ExtractInfix(lhs, _, pats) =>
         getFromPat(lhs) ++ pats.flatMap(getFromPat)
-      case Pat.Wildcard() | Pat.Arg.SeqWildcard() =>
+      case Pat.Wildcard() | Pat.SeqWildcard() =>
         // DESNOTE(2017-05-15, pjrt): underscored vals are inaccesable
         Seq.empty
       case Pat.Bind(lhs, rhs) =>
