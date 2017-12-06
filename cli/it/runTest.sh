@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+sbt cli/assembly
+
 cd cli/it
 
 java -jar ../target/scala-2.12/stags-0.2.7-SNAPSHOT ./ -o tags
