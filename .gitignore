@@ -24,6 +24,8 @@ project/plugins/project/
 .worksheet
 .idea
 
+cli/it/tags
+
 # ENSIME specific
 
 # End of https://www.gitignore.io/api/scala
