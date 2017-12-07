@@ -9,70 +9,31 @@ object Utils {
 
   import Matchers._
 
-  /**
-   * Compare the two set of tags, while smartly displaying what went wrong
-   */
-  def compareTags(
-      actual: Seq[ScopedTag],
-      expected: Seq[ScopedTag]
-    )(implicit limit: Int,
-      pos: Position
-    ): Unit = {
-
-    def toMap(s: Seq[ScopedTag]): Map[String, (Boolean, TagPosition)] =
-      s.flatMap(
-          t =>
-            t.mkScopedTags(limit)
-              .map(
-                _.tagName -> ((t.tag.isStatic, t.tag.row -> t.tag.column))
-            )
-        )
-        .toMap
-    val aSize = actual.size
-    val eSize = expected.size
-    if (aSize > eSize)
-      fail(s"Got more tags than expected $aSize > $eSize")
-    else if (aSize < eSize)
-      fail(s"Got less tags than expected $aSize < $eSize")
-    else ()
-
-    val mActual: Map[String, (Boolean, TagPosition)] = toMap(actual)
-
-    def testContent(
-        name: String,
-        actual: (Boolean, TagPosition),
-        expected: (Boolean, TagPosition)
-      ) = {
-      if (expected == actual) ()
-      else
-        fail(
-          s"Found tag `$name` but $actual /= $expected"
-        )
-    }
-
-    toMap(expected).foreach {
-      case (k, v) =>
-        mActual
-          .get(k)
-          .map { c =>
-            testContent(k, c, v)
-          }
-          .getOrElse(fail(s"Did not find `$k`"))
-    }
-  }
-
   implicit class SeqOfTagsOps(val testCode: String) extends AnyVal {
 
     def ~>(
-        expected: Seq[ScopedTag]
-      )(implicit limit: Int,
-        pos: Position
+        expected: Seq[(Scope, String, Boolean)]
+      )(implicit pos: Position
       ): Unit = {
       testCode.parse[Source] match {
         case _: parsers.Parsed.Error => fail("Could not parse test code")
         case parsers.Parsed.Success(parsed) =>
           val actual = TagGenerator.generateTags(parsed)
-          compareTags(actual, expected)
+          val a =
+            actual.map(s => (s.scope, s.tag.tagName) -> s.tag.isStatic).toMap
+          val b = expected.map(t => (t._1, t._2) -> t._3).toMap
+
+          b.foreach {
+            case (n, v) =>
+              a.get(n).fold(fail(s"Expected $n, but not found")) { f =>
+                if (f == v)
+                  succeed
+                else
+                  fail(
+                    s"Found $n:  isStatic = $f, but it was supposed to be not"
+                  )
+              }
+          }
       }
     }
   }

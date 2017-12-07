@@ -27,25 +27,24 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
 
 object ScopedTag {
 
-  def apply(
-      scope: Scope,
-      tokenName: Name,
-      isStatic: Boolean,
-      pos: Position
-    ): ScopedTag = {
+  def apply(scope: Scope, isStatic: Boolean, member: Member): ScopedTag = {
 
-    ScopedTag(scope, Tag(tokenName, isStatic, pos))
-  }
+    val tokenName = member.name.toString
+    val nameS = member.name.pos.start
+    val statS = member.pos.start
+    // DESNOTE(2017-12-11, pjrt): Classes and the like return the full class.
+    // We want the first line. Head call should be safe.
+    val line = member.tokens.toString.split('\n').head
 
-  def apply(
-      scope: Scope,
-      tokenName: String,
-      isStatic: Boolean,
-      row: Int,
-      col: Int
-    ): ScopedTag = {
+    val nameOffset = nameS - statS
+    val tagAddress = {
+      val b = new StringBuilder(line)
+      b.insert(0, '/')
+      b.insert(nameOffset + 1, "\\zs")
+      b.append('/')
+    }
 
-    ScopedTag(scope, Tag(tokenName, isStatic, row, col))
+    ScopedTag(scope, Tag(tokenName, isStatic, tagAddress.mkString))
   }
 }
 
@@ -56,42 +55,10 @@ object ScopedTag {
  * It does not contain the filename since that's information that exists
  * outside of the syntax tree.
  */
-final case class Tag(
-    tagName: String,
-    isStatic: Boolean,
-    row: Int,
-    column: Int) {
-
-  lazy val pos: TagPosition = row -> column
-
-  final val tagAddress =
-    s"call cursor(${row + 1}, ${column + 1})"
+final case class Tag(tagName: String, isStatic: Boolean, tagAddress: String) {
 
   override def toString: String =
-    s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $row, $column)"
-}
-
-object Tag {
-
-  def apply(tokenName: Name, isStatic: Boolean, pos: Position): Tag = {
-
-    Tag(
-      tokenName.value,
-      isStatic,
-      pos.startLine,
-      pos.startColumn
-    )
-  }
-
-  def apply(tokenName: String, isStatic: Boolean, pos: Position): Tag = {
-
-    Tag(
-      tokenName,
-      isStatic,
-      pos.startLine,
-      pos.startColumn
-    )
-  }
+    s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $tagAddress)"
 }
 
 /**
@@ -101,7 +68,7 @@ object Tag {
  */
 final case class TagLine(tag: Tag, filePath: Path) {
 
-  private final val term = "\""
+  private final val term = ";\""
   private final val tab = "\t"
 
   private def extras(fields: Seq[(String, String)]) =

@@ -83,8 +83,9 @@ object TagGenerator {
       // access common fields in Defn (mods, name, etc), though looking here
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
-      case d: Defn.Def => Seq(tagsForMember(scope, d, getStatic(d.mods)))
-      case d: Decl.Def => Seq(tagsForMember(scope, d, getStatic(d.mods)))
+      case d: Defn.Def =>
+        Seq(tag(scope, d, getStatic(d.mods)))
+      case d: Decl.Def => Seq(tag(scope, d, getStatic(d.mods)))
       case d: Defn.Val =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
       case d: Decl.Val =>
@@ -93,23 +94,23 @@ object TagGenerator {
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
       case d: Decl.Var =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
-      case d: Defn.Type => Seq(tagsForMember(scope, d, getStatic(d.mods)))
-      case d: Decl.Type => Seq(tagsForMember(scope, d, getStatic(d.mods)))
+      case d: Defn.Type => Seq(tag(scope, d, getStatic(d.mods)))
+      case d: Decl.Type => Seq(tag(scope, d, getStatic(d.mods)))
 
       case d: Defn.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
-        tagsForMember(scope, d, static) +:
+        tag(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
       case d: Pkg.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
-        tagsForMember(scope, d, static) +:
+        tag(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
 
       case d: Defn.Trait =>
         val static = getStatic(d.mods)
-        tagsForMember(scope, d, static) +:
+        tag(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
@@ -123,7 +124,7 @@ object TagGenerator {
             tagsForCtorParams(d.isCaseClass, d.ctor.paramss)
 
         val static = getStatic(d.mods)
-        (tagsForMember(scope, d, static) +: ctorParamTags) ++
+        (tag(scope, d, static) +: ctorParamTags) ++
           d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
 
       case _ => Seq.empty
@@ -140,7 +141,7 @@ object TagGenerator {
     val static = staticParent || isStatic(scope, mods)
     def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent)
     pat match {
-      case p: Pat.Var      => Seq(tagsForMember(scope, p, static))
+      case p: Pat.Var      => Seq(tag(scope, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
       case Pat.Extract(_, pats) =>
@@ -159,16 +160,20 @@ object TagGenerator {
     }
   }
 
-  private def tagsForMember(scope: Scope, term: Member, static: Boolean) = {
+  private def tag(scope: Scope, term: Member, static: Boolean) = {
 
-    ScopedTag(scope, term.name, static, term.name.pos)
+    ScopedTag(scope, static, term)
+  }
+
+  private def tag(term: Member, static: Boolean) = {
+
+    ScopedTag(Scope.empty, static, term)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be
   // static. Even though it can be accessed from the outside, it is very
   // unlikely to ever be.
-  private def tagForImplicitClassParam(param: Term.Param) =
-    ScopedTag(Scope.empty, param.name, true, param.name.pos)
+  private def tagForImplicitClassParam(param: Term.Param) = tag(param, true)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
@@ -183,18 +188,13 @@ object TagGenerator {
           if (isCase) isStatic(Scope.empty, p.mods)
           else isStaticCtorParam(p)
         first.map(
-          p => ScopedTag(Scope.empty, p.name, firstIsStatic(p), p.name.pos)
+          p => tag(p, firstIsStatic(p))
         ) ++
           (for {
             pGroup <- rem
             param <- pGroup
           } yield {
-            ScopedTag(
-              Scope.empty,
-              param.name,
-              isStaticCtorParam(param),
-              param.name.pos
-            )
+            tag(param, isStaticCtorParam(param))
           })
       case Seq() => Nil
     }

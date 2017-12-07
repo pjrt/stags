@@ -1,12 +1,16 @@
 package co.pjrt.stags
 
+import scala.meta._
+
 import org.scalatest.{FreeSpec, Matchers}
 
 import Utils._
 
 class TagGeneratorTest extends FreeSpec with Matchers {
 
-  def abc(q: String*): Scope = Scope(Seq("c", "b", "a"), q.reverse.toSeq)
+  private def abc(q: String*): Scope =
+    Scope(Seq("c", "b", "a"), q.reverse.toSeq)
+  private def local(q: String*): Scope = Scope(Nil, q.reverse.toList)
 
   // TODO should test against other limits
   implicit val limit: Int = 10
@@ -24,10 +28,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(abc(), "SomeClass", false, 3, 6),
-      ScopedTag(Scope.empty, "hello", false, 4, 5),
-      ScopedTag(Scope.empty, "Alias", false, 5, 6),
-      ScopedTag(Scope.empty, "Undefined", false, 6, 6)
+      (abc(), "SomeClass", false),
+      (Scope.empty, "hello", false),
+      (Scope.empty, "Alias", false),
+      (Scope.empty, "Undefined", false)
     )
   }
 
@@ -47,14 +51,14 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(abc(), "SomeTrait", false, 3, 6),
-      ScopedTag(Scope.empty, "hello", false, 4, 5),
-      ScopedTag(Scope.empty, "Alias", false, 5, 6),
-      ScopedTag(Scope.empty, "Undefined", false, 6, 6),
-      ScopedTag(Scope.empty, "defined1", false, 7, 5),
-      ScopedTag(Scope.empty, "defined2", false, 7, 15),
-      ScopedTag(Scope.empty, "undefined", false, 8, 5),
-      ScopedTag(Scope.empty, "undefined2", false, 9, 5)
+      (abc(), "SomeTrait", false),
+      (Scope.empty, "hello", false),
+      (Scope.empty, "Alias", false),
+      (Scope.empty, "Undefined", false),
+      (Scope.empty, "defined1", false),
+      (Scope.empty, "defined2", false),
+      (Scope.empty, "undefined", false),
+      (Scope.empty, "undefined2", false)
     )
   }
 
@@ -71,14 +75,14 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(Scope.empty, "SomeObject", false, 1, 7),
-      ScopedTag(Scope(Seq("SomeObject")), "whatup", false, 2, 5),
-      ScopedTag(Scope(Seq("SomeObject")), "userName", false, 3, 5),
-      ScopedTag(Scope(Seq("SomeObject")), "userName2", false, 3, 15),
-      ScopedTag(Scope(Seq("SomeObject")), "Alias", false, 4, 6),
-      ScopedTag(Scope(Seq("SomeObject")), "Decl", false, 5, 6),
-      ScopedTag(Scope(Seq("SomeObject")), "tUserName", false, 6, 6),
-      ScopedTag(Scope(Seq("SomeObject")), "tUserName2", false, 6, 17)
+      (Scope.empty, "SomeObject", false),
+      (local("SomeObject"), "whatup", false),
+      (local("SomeObject"), "userName", false),
+      (local("SomeObject"), "userName2", false),
+      (local("SomeObject"), "Alias", false),
+      (local("SomeObject"), "Decl", false),
+      (local("SomeObject"), "tUserName", false),
+      (local("SomeObject"), "tUserName2", false)
     )
   }
 
@@ -93,9 +97,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(Scope.empty, "SomeObject", false, 1, 7),
-      ScopedTag(Scope(Seq("SomeObject")), "InnerObject", false, 2, 8),
-      ScopedTag(Scope(Seq("InnerObject")), "hello", false, 3, 7)
+      (Scope.empty, "SomeObject", false),
+      (local("SomeObject"), "InnerObject", false),
+      (local("SomeObject", "InnerObject"), "hello", false)
     )
   }
 
@@ -113,16 +117,18 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(abc(), "test", false, 3, 15),
-      ScopedTag(abc("test"), "whatup", false, 4, 5),
-      ScopedTag(abc("test"), "userName", false, 5, 5),
-      ScopedTag(abc("test"), "userName2", false, 5, 15),
-      ScopedTag(abc("test"), "Alias", false, 6, 6),
-      ScopedTag(abc("test"), "Decl", false, 7, 6)
+      (abc(), "test", false),
+      (abc("test"), "whatup", false),
+      (abc("test"), "userName", false),
+      (abc("test"), "userName2", false),
+      (abc("test"), "Alias", false),
+      (abc("test"), "Decl", false)
     )
   }
 
-  "should work for multiple packages being defined in the same file" in {
+  // DESNOTE(2017-12-06, pjrt): scalameta doesn't seem to understand
+  // `package test.some`
+  "should work for multiple packages being defined in the same file" ignore {
     val testFile =
       """
       |package a.b.c
@@ -139,9 +145,9 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> List(
-      ScopedTag(abc("test", "some"), "X", false, 4, 7),
-      ScopedTag(abc("test2", "some2"), "X2", false, 7, 7),
-      ScopedTag(abc("test2", "some2", "inner", "pack"), "InnerX", false, 9, 9)
+      (abc("test", "some"), "X", false),
+      (abc("test2", "some2"), "X2", false),
+      (abc("test2", "some2", "inner", "pack"), "InnerX", false)
     )
   }
 
@@ -164,25 +170,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     testFile ~>
       List(
-        ScopedTag(abc(), "SomeObject", false, 3, 7),
-        ScopedTag(abc("SomeObject"), "InnerObject", false, 4, 19),
-        ScopedTag(
-          abc("SomeObject", "InnerObject"),
-          "privateHello",
-          true,
-          5,
-          15
-        ),
-        ScopedTag(
-          abc("SomeObject", "InnerObject"),
-          "publicHello",
-          false,
-          6,
-          7
-        ),
-        ScopedTag(abc(), "SealedTrait", false, 9, 13),
-        ScopedTag(Scope.empty, "f", false, 10, 12),
-        ScopedTag(Scope.empty, "protectedHello", false, 11, 22)
+        (abc(), "SomeObject", false),
+        (abc("SomeObject"), "InnerObject", false),
+        (abc("SomeObject", "InnerObject"), "privateHello", true),
+        (abc("SomeObject", "InnerObject"), "publicHello", false),
+        (abc(), "SealedTrait", false),
+        (Scope.empty, "f", false),
+        (Scope.empty, "protectedHello", false)
       )
   }
 
@@ -208,21 +202,15 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
     testFile ~>
       List(
-        ScopedTag(abc(), "SomeObject", false, 3, 7),
-        ScopedTag(abc("SomeObject"), "InnerObject", true, 4, 28),
-        ScopedTag(
-          abc("SomeObject", "InnerObject"),
-          "publicHello",
-          true,
-          5,
-          7
-        ),
-        ScopedTag(abc(), "SealedTrait", false, 8, 13),
-        ScopedTag(Scope.empty, "protectedHello", true, 9, 20),
-        ScopedTag(abc(), "PrivateClass", true, 11, 14),
-        ScopedTag(Scope.empty, "x", true, 12, 6),
-        ScopedTag(Scope.empty, "y", true, 13, 6),
-        ScopedTag(Scope.empty, "z", true, 14, 6)
+        (abc(), "SomeObject", false),
+        (abc("SomeObject"), "InnerObject", true),
+        (abc("SomeObject", "InnerObject"), "publicHello", true),
+        (abc(), "SealedTrait", false),
+        (Scope.empty, "protectedHello", true),
+        (abc(), "PrivateClass", true),
+        (Scope.empty, "x", true),
+        (Scope.empty, "y", true),
+        (Scope.empty, "z", true)
       )
   }
 
@@ -238,10 +226,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         """.stripMargin
 
       testFileClass ~> Seq(
-        ScopedTag(Scope.empty, "SomeClass", false, 1, 6),
-        ScopedTag(Scope.empty, "name", true, 2, 3),
-        ScopedTag(Scope.empty, "number", false, 3, 7),
-        ScopedTag(Scope.empty, "age", true, 4, 15)
+        (Scope.empty, "SomeClass", false),
+        (Scope.empty, "name", true),
+        (Scope.empty, "number", false),
+        (Scope.empty, "age", true)
       )
     }
 
@@ -258,13 +246,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
       testFileCase ~> Seq(
-        ScopedTag(Scope.empty, "SomeClass", false, 1, 11),
-        ScopedTag(Scope.empty, "name", false, 2, 3),
-        ScopedTag(Scope.empty, "number", false, 3, 7),
-        ScopedTag(Scope.empty, "age", true, 4, 15),
-        ScopedTag(Scope.empty, "address", false, 5, 16),
-        ScopedTag(Scope.empty, "ctx", true, 6, 3),
-        ScopedTag(Scope.empty, "ex", false, 7, 7)
+        (Scope.empty, "SomeClass", false),
+        (Scope.empty, "name", false),
+        (Scope.empty, "number", false),
+        (Scope.empty, "age", true),
+        (Scope.empty, "address", false),
+        (Scope.empty, "ctx", true),
+        (Scope.empty, "ex", false)
       )
     }
   }
@@ -280,7 +268,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     """.stripMargin
 
     testFileCase ~> Seq(
-      ScopedTag(Scope.empty, "SomeClass", false, 2, 11)
+      (Scope.empty, "SomeClass", false)
     )
   }
 
@@ -296,13 +284,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> Seq(
-      ScopedTag(Scope.empty, "Odd", false, 1, 7),
-      ScopedTag(Scope(Seq("Odd")), "d41", false, 2, 6),
-      ScopedTag(Scope(Seq("Odd")), "d42", false, 2, 22),
-      ScopedTag(Scope(Seq("Odd")), "d43", false, 2, 43),
-      ScopedTag(Scope(Seq("Odd")), "id", false, 3, 11),
-      ScopedTag(Scope(Seq("Odd")), "v", false, 3, 20),
-      ScopedTag(Scope(Seq("Odd")), "x", false, 4, 16)
+      (Scope.empty, "Odd", false),
+      (local("Odd"), "d41", false),
+      (local("Odd"), "d42", false),
+      (local("Odd"), "d43", false),
+      (local("Odd"), "id", false),
+      (local("Odd"), "v", false),
+      (local("Odd"), "x", false)
     )
   }
 
@@ -313,8 +301,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> Seq(
-      ScopedTag(Scope.empty, "Class", false, 1, 15),
-      ScopedTag(Scope.empty, "x", true, 1, 25)
+      (Scope.empty, "Class", false),
+      (Scope.empty, "x", true)
     )
   }
 
@@ -327,37 +315,60 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> Seq(
-      ScopedTag(Scope.empty, "SomeThing", false, 1, 6)
+      (Scope.empty, "SomeThing", false)
     )
   }
 
   "qualified tags for objects should work with explicit packages" in {
     val testFile =
       """
-      |package a.b.c.d
+      |package a.b.c
       |object SomeThing {
       |  def some: Int = {}
       |}
       """.stripMargin
 
     testFile ~> Seq(
-      ScopedTag(Scope.empty, "SomeThing", false, 2, 7),
-      ScopedTag(Scope(Seq("SomeThing")), "some", false, 3, 6)
+      (abc(), "SomeThing", false),
+      (abc("SomeThing"), "some", false)
     )
   }
 
   "Decl defs should create tags" in {
     val testFile =
       """
-      |package a.b.c.d
+      |package a.b.c
       |trait TraitA {
       |  def declDef: Int
       |}
       """.stripMargin
 
     testFile ~> Seq(
-      ScopedTag(Scope.empty, "TraitA", false, 2, 6),
-      ScopedTag(Scope.empty, "declDef", false, 3, 6)
+      (abc(), "TraitA", false),
+      (Scope.empty, "declDef", false)
     )
+  }
+
+  "address generation" - {
+
+    "should generate the right address for a class and def" in {
+
+      val testFile =
+        """
+      |package a.b.c
+      |
+      |class SomeClass() {
+      | def hello(name: String) = name
+      |}
+      """.stripMargin
+
+      val defAddr = "/def \\zshello(name: String) = name/"
+      val classAddr = "/class \\zsSomeClass() {/"
+
+      val s = testFile.parse[Source].get
+      val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
+      actual should contain(defAddr)
+      actual should contain(classAddr)
+    }
   }
 }
