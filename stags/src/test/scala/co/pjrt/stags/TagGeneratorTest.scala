@@ -349,6 +349,31 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
+  "should ignore @annotations" in {
+    val testFile =
+      """
+      |package a.b.c
+      |@typeclass
+      |object A {
+      |  @someFunkyMacro
+      |  type K
+      |
+      |  @deprecated("dep")
+      |  def f: Int = {
+      |   1
+      |  }
+      |}
+      """.stripMargin
+
+    testFile ~>
+      Seq(
+        (abc(), "A", false),
+        (abc("A"), "K", false),
+        (abc("A"), "f", false),
+      )
+
+  }
+
   "address generation" - {
 
     "should generate the right address for a class and def" in {
@@ -359,16 +384,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |
       |class SomeClass() {
       | def hello(name: String) = name
+      | def hi(name: String) = {
+      |   name
+      | }
       |}
       """.stripMargin
 
       val defAddr = "/def \\zshello(name: String) = name/"
       val classAddr = "/class \\zsSomeClass() {/"
+      val defAddr2 = "/def \\zshi(name: String) = {/"
 
       val s = testFile.parse[Source].get
       val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
-      actual should contain(defAddr)
-      actual should contain(classAddr)
+      actual should contain only (defAddr, defAddr2, classAddr)
     }
   }
 }

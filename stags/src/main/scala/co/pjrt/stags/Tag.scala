@@ -27,18 +27,26 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
 
 object ScopedTag {
 
-  def apply(scope: Scope, isStatic: Boolean, member: Member): ScopedTag = {
+  def fromMember(scope: Scope, isStatic: Boolean, member: Member): ScopedTag = {
 
     val tokenName = member.name.toString
     val nameS = member.name.pos.start
-    val statS = member.pos.start
-    // DESNOTE(2017-12-11, pjrt): Classes and the like return the full class.
-    // We want the first line. Head call should be safe.
-    val line = member.tokens.toString.split('\n').head
 
-    val nameOffset = nameS - statS
+    // DESNOTE(2017-12-11, pjrt): Remove any annotations.
+    val tokens = member.tokens
+    val linePostAnnot =
+      if (tokens.head.is[Token.At])
+        tokens.dropWhile(!_.is[Token.LF]).tail
+      else
+        tokens
+
+    // DESNOTE(2017-12-11, pjrt): Take the first line of the field, avoiding
+    // whole bodies
+    val line = linePostAnnot.takeWhile(!_.is[Token.LF])
+
+    val nameOffset = nameS - line.head.start
     val tagAddress = {
-      val b = new StringBuilder(line)
+      val b = new StringBuilder(line.mkString)
       b.insert(0, '/')
       b.insert(nameOffset + 1, "\\zs")
       b.append('/')

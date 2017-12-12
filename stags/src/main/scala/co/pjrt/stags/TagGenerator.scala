@@ -162,12 +162,12 @@ object TagGenerator {
 
   private def tag(scope: Scope, term: Member, static: Boolean) = {
 
-    ScopedTag(scope, static, term)
+    ScopedTag.fromMember(scope, static, term)
   }
 
   private def tag(term: Member, static: Boolean) = {
 
-    ScopedTag(Scope.empty, static, term)
+    ScopedTag.fromMember(Scope.empty, static, term)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be
