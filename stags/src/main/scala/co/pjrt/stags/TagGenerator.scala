@@ -87,13 +87,13 @@ object TagGenerator {
         Seq(tag(scope, d, getStatic(d.mods)))
       case d: Decl.Def => Seq(tag(scope, d, getStatic(d.mods)))
       case d: Defn.Val =>
-        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Decl.Val =>
-        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Defn.Var =>
-        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Decl.Var =>
-        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic))
+        d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Defn.Type => Seq(tag(scope, d, getStatic(d.mods)))
       case d: Decl.Type => Seq(tag(scope, d, getStatic(d.mods)))
 
@@ -131,17 +131,29 @@ object TagGenerator {
     }
   }
 
+  private def patTag(
+      scope: Scope,
+      parent: Tree,
+      pat: Pat.Var,
+      static: Boolean
+    ): ScopedTag = {
+
+    val addr = addrForTree(parent, pat.name)
+    ScopedTag(scope, pat.name.toString, static, addr)
+  }
+
   private def getFromPats(
       scope: Scope,
       mods: Seq[Mod],
       pat: Pat,
-      staticParent: Boolean
+      staticParent: Boolean,
+      parent: Tree
     ): Seq[ScopedTag] = {
 
     val static = staticParent || isStatic(scope, mods)
-    def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent)
+    def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent, parent)
     pat match {
-      case p: Pat.Var      => Seq(tag(scope, p, static))
+      case p: Pat.Var      => Seq(patTag(scope, parent, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
       case Pat.Extract(_, pats) =>
@@ -160,14 +172,48 @@ object TagGenerator {
     }
   }
 
-  private def tag(scope: Scope, term: Member, static: Boolean) = {
+  private def noAnnot(mods: List[Mod]) = mods.filterNot(_.is[Mod.Annot])
+  private def removeAnnotations(stat: Tree): Tree =
+    stat match {
+      case d: Defn.Val    => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Var    => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Def    => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Macro  => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Type   => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Class  => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Trait  => d.copy(mods = noAnnot(d.mods))
+      case d: Defn.Object => d.copy(mods = noAnnot(d.mods))
 
-    ScopedTag.fromMember(scope, static, term)
+      case d: Decl.Val  => d.copy(mods = noAnnot(d.mods))
+      case d: Decl.Var  => d.copy(mods = noAnnot(d.mods))
+      case d: Decl.Def  => d.copy(mods = noAnnot(d.mods))
+      case d: Decl.Type => d.copy(mods = noAnnot(d.mods))
+
+      case d: Term.Param => d.copy(mods = noAnnot(d.mods))
+
+      case d: Pkg.Object => d.copy(mods = noAnnot(d.mods))
+    }
+
+  private def addrForTree(tree: Tree, tagName: Name): String = {
+
+    val line = removeAnnotations(tree).tokens.takeWhile(!_.is[Token.LF])
+    val tagNameStr = tagName.value
+    val replacement = s"\\zs$tagNameStr"
+    val search = line.syntax.replace(tagNameStr, replacement)
+    s"/$search/"
   }
 
-  private def tag(term: Member, static: Boolean) = {
+  private def tag(scope: Scope, member: Member, static: Boolean): ScopedTag = {
 
-    ScopedTag.fromMember(Scope.empty, static, term)
+    val tagAddress = addrForTree(member, member.name)
+    val tokenName = member.name.toString
+
+    ScopedTag(scope, tokenName, static, tagAddress)
+  }
+
+  private def tag(term: Member, static: Boolean): ScopedTag = {
+
+    tag(Scope.empty, term, static)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be

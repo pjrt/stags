@@ -43,6 +43,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |trait SomeTrait {
       | def hello(name: String) = name
       | type Alias = String
+      | @hi
       | type Undefined <: SomeUpper
       | val defined1, defined2 = "hello"
       | val undefined: String
@@ -356,12 +357,14 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |@typeclass
       |object A {
       |  @someFunkyMacro
+      |  @someOtherMacro
       |  type K
       |
       |  @deprecated("dep")
       |  def f: Int = {
       |   1
       |  }
+      |  @wow private val x = 2
       |}
       """.stripMargin
 
@@ -370,6 +373,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         (abc(), "A", false),
         (abc("A"), "K", false),
         (abc("A"), "f", false),
+        (abc("A"), "x", true)
       )
 
   }
@@ -382,17 +386,19 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         """
       |package a.b.c
       |
-      |class SomeClass() {
+      |@typeclassish
+      |private class SomeClass() {
+      | @someMacro
       | def hello(name: String) = name
-      | def hi(name: String) = {
+      | @someTag protected def hi(name: String) = {
       |   name
       | }
       |}
       """.stripMargin
 
       val defAddr = "/def \\zshello(name: String) = name/"
-      val classAddr = "/class \\zsSomeClass() {/"
-      val defAddr2 = "/def \\zshi(name: String) = {/"
+      val classAddr = "/private class \\zsSomeClass() {/"
+      val defAddr2 = "/protected def \\zshi(name: String) = {/"
 
       val s = testFile.parse[Source].get
       val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)

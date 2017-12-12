@@ -1,6 +1,5 @@
 package co.pjrt.stags
 
-import scala.meta._
 import scala.util.Sorting
 
 import co.pjrt.stags.paths.Path
@@ -27,32 +26,14 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
 
 object ScopedTag {
 
-  def fromMember(scope: Scope, isStatic: Boolean, member: Member): ScopedTag = {
+  def apply(
+      scope: Scope,
+      tokenName: String,
+      isStatic: Boolean,
+      tagAddress: String
+    ): ScopedTag = {
 
-    val tokenName = member.name.toString
-    val nameS = member.name.pos.start
-
-    // DESNOTE(2017-12-11, pjrt): Remove any annotations.
-    val tokens = member.tokens
-    val linePostAnnot =
-      if (tokens.head.is[Token.At])
-        tokens.dropWhile(!_.is[Token.LF]).tail
-      else
-        tokens
-
-    // DESNOTE(2017-12-11, pjrt): Take the first line of the field, avoiding
-    // whole bodies
-    val line = linePostAnnot.takeWhile(!_.is[Token.LF])
-
-    val nameOffset = nameS - line.head.start
-    val tagAddress = {
-      val b = new StringBuilder(line.mkString)
-      b.insert(0, '/')
-      b.insert(nameOffset + 1, "\\zs")
-      b.append('/')
-    }
-
-    ScopedTag(scope, Tag(tokenName, isStatic, tagAddress.mkString))
+    ScopedTag(scope, Tag(tokenName, isStatic, tagAddress))
   }
 }
 

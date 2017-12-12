@@ -2,7 +2,9 @@ package a.b.c
 
 class TestFile {
 
-  def x: Int = 1
+  @some protected def x: Int = 1
 
+  @someTag
+  @someTag2
   val y = "hellp"
 }

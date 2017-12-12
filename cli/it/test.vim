@@ -5,7 +5,7 @@ function Test() abort
   let c = col('.')
 
   call assert_equal(5, l)
-  call assert_equal(7, c)
+  call assert_equal(23, c)
 
   tag TestFile
   let l = line('.')
