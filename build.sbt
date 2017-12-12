@@ -30,19 +30,3 @@ lazy val root = (project in file("."))
     // Don't publish useless root artifacts
     packagedArtifacts := Map.empty
   )
-
-def releaseProcessDef = Seq[ReleaseStep](
-  checkSnapshotDependencies,
-  inquireVersions,
-  runClean,
-  runTest,
-  setReleaseVersion,
-  commitReleaseVersion,
-  tagRelease,
-  ReleaseStep(action = Command.process("stags/publishSigned", _)),
-  ReleaseStep(action = Command.process("cli/publishSigned", _)),
-  setNextVersion,
-  commitNextVersion,
-  ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
-  pushChanges
-)

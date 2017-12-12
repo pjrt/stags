@@ -3,8 +3,9 @@ import sbt._
 import com.typesafe.sbt.pgp.PgpKeys._
 import xerial.sbt.Sonatype.SonatypeKeys._
 import sbtrelease.ReleasePlugin.autoImport._
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations._
 
-class SonatypeSettings extends AutoPlugin {
+object ProjectPlugin extends AutoPlugin {
 
   override def trigger = allRequirements
 
@@ -25,16 +26,17 @@ class SonatypeSettings extends AutoPlugin {
     "-Ypartial-unification"
   )
 
-  override def projectSettings =
+  override def buildSettings =
     Seq(
       organization := "co.pjrt",
       scalaVersion := "2.12.2",
-      scalacOptions := scalacOps,
-      scalacOptions in (Compile, console) ~=
-        (_.filterNot(_ == "-Ywarn-unused-import")),
-      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+      releaseVersionFile := baseDirectory.value / "version.sbt",
       useGpg := true,
       sonatypeProfileName := "co.pjrt",
+      resolvers ++= Seq(
+        Resolver.sonatypeRepo("releases"),
+        Resolver.sonatypeRepo("snapshots")
+      ),
       // To sync with Maven central, you need to supply the following information:
       publishMavenStyle := true,
       licenses := Seq("MIT" -> url("https://opensource.org/licenses/MIT")),
@@ -52,6 +54,29 @@ class SonatypeSettings extends AutoPlugin {
           email = "pedro@pjrt.co",
           url = url("http://www.pjrt.co/")
         )
+      ),
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runClean,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        tagRelease,
+        ReleaseStep(action = Command.process("stags/publishSigned", _)),
+        ReleaseStep(action = Command.process("cli/publishSigned", _)),
+        setNextVersion,
+        commitNextVersion,
+        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+        pushChanges
       )
+    )
+
+  override def projectSettings =
+    Seq(
+      scalacOptions := scalacOps,
+      scalacOptions in (Compile, console) ~=
+        (_.filterNot(_ == "-Ywarn-unused-import")),
+      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
     )
 }
