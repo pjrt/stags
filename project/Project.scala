@@ -31,7 +31,6 @@ object ProjectPlugin extends AutoPlugin {
       organization := "co.pjrt",
       scalaVersion := "2.12.2",
       releaseVersionFile := baseDirectory.value / "version.sbt",
-      useGpg := true,
       sonatypeProfileName := "co.pjrt",
       resolvers ++= Seq(
         Resolver.sonatypeRepo("releases"),
