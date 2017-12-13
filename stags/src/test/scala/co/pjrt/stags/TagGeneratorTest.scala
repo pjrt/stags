@@ -387,22 +387,45 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |package a.b.c
       |
       |@typeclassish
-      |private class SomeClass() {
+      |@isshs private class SomeClass(k: SomeClass) {
       | @someMacro
       | def hello(name: String) = name
+      |
+      | @combo
       | @someTag protected def hi(name: String) = {
       |   name
       | }
+      |
+      | @anotherMacro
+      | val (a, b, c) = someTriple
+      |
+      | def e: Long = 2
       |}
       """.stripMargin
 
       val defAddr = "/def \\zshello(name: String) = name/"
-      val classAddr = "/private class \\zsSomeClass() {/"
+      val classAddr = "/private class \\zsSomeClass(k: SomeClass) {/"
+      val classAddrK = "/private class SomeClass(\\zsk: SomeClass) {/"
       val defAddr2 = "/protected def \\zshi(name: String) = {/"
+      val aAddr = "/val (\\zsa, b, c) = someTriple/"
+      val bAddr = "/val (a, \\zsb, c) = someTriple/"
+      val cAddr = "/val (a, b, \\zsc) = someTriple/"
+      val defE = "/def \\zse: Long = 2/"
 
       val s = testFile.parse[Source].get
       val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
-      actual should contain only (defAddr, defAddr2, classAddr)
+      val expected =
+        List(
+          defAddr,
+          defAddr2,
+          classAddr,
+          classAddrK,
+          aAddr,
+          bAddr,
+          cAddr,
+          defE
+        )
+      actual should contain theSameElementsAs expected
     }
   }
 }

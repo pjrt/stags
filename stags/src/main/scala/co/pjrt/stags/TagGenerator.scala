@@ -84,8 +84,8 @@ object TagGenerator {
       // https://github.com/scalameta/scalameta/blob/master/scalameta/trees/src/main/scala/scala/meta/Trees.scala#L336
       // it looks like there should be a way.
       case d: Defn.Def =>
-        Seq(tag(scope, d, getStatic(d.mods)))
-      case d: Decl.Def => Seq(tag(scope, d, getStatic(d.mods)))
+        Seq(tagForMember(scope, d, getStatic(d.mods)))
+      case d: Decl.Def => Seq(tagForMember(scope, d, getStatic(d.mods)))
       case d: Defn.Val =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Decl.Val =>
@@ -94,23 +94,23 @@ object TagGenerator {
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
       case d: Decl.Var =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))
-      case d: Defn.Type => Seq(tag(scope, d, getStatic(d.mods)))
-      case d: Decl.Type => Seq(tag(scope, d, getStatic(d.mods)))
+      case d: Defn.Type => Seq(tagForMember(scope, d, getStatic(d.mods)))
+      case d: Decl.Type => Seq(tagForMember(scope, d, getStatic(d.mods)))
 
       case d: Defn.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
-        tag(scope, d, static) +:
+        tagForMember(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
       case d: Pkg.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
-        tag(scope, d, static) +:
+        tagForMember(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
 
       case d: Defn.Trait =>
         val static = getStatic(d.mods)
-        tag(scope, d, static) +:
+        tagForMember(scope, d, static) +:
           d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
@@ -119,27 +119,16 @@ object TagGenerator {
             // element (due to how implicit classes work). However, parsing
             // of other cases is valid, though they would fail to compile. Just
             // to be in the safe side, flatten and map instead of _.head.head
-            d.ctor.paramss.flatten.map(tagForImplicitClassParam)
+            d.ctor.paramss.flatten.map(tagForImplicitClassParam(d, _))
           else
-            tagsForCtorParams(d.isCaseClass, d.ctor.paramss)
+            tagsForCtorParams(d, d.isCaseClass, d.ctor.paramss)
 
         val static = getStatic(d.mods)
-        (tag(scope, d, static) +: ctorParamTags) ++
+        (tagForMember(scope, d, static) +: ctorParamTags) ++
           d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
 
       case _ => Seq.empty
     }
-  }
-
-  private def patTag(
-      scope: Scope,
-      parent: Tree,
-      pat: Pat.Var,
-      static: Boolean
-    ): ScopedTag = {
-
-    val addr = addrForTree(parent, pat.name)
-    ScopedTag(scope, pat.name.toString, static, addr)
   }
 
   private def getFromPats(
@@ -197,13 +186,19 @@ object TagGenerator {
   private def addrForTree(tree: Tree, tagName: Name): String = {
 
     val line = removeAnnotations(tree).tokens.takeWhile(!_.is[Token.LF])
-    val tagNameStr = tagName.value
-    val replacement = s"\\zs$tagNameStr"
-    val search = line.syntax.replace(tagNameStr, replacement)
+    val name = tagName.value
+
+    val replacement = s"\\\\zs$name"
+    val nameW = s"\\b$name\\b"
+    val search = line.syntax.replaceFirst(nameW, replacement)
     s"/$search/"
   }
 
-  private def tag(scope: Scope, member: Member, static: Boolean): ScopedTag = {
+  private def tagForMember(
+      scope: Scope,
+      member: Member,
+      static: Boolean
+    ): ScopedTag = {
 
     val tagAddress = addrForTree(member, member.name)
     val tokenName = member.name.toString
@@ -211,20 +206,38 @@ object TagGenerator {
     ScopedTag(scope, tokenName, static, tagAddress)
   }
 
-  private def tag(term: Member, static: Boolean): ScopedTag = {
+  private def patTag(
+      scope: Scope,
+      parent: Tree,
+      pat: Pat.Var,
+      static: Boolean
+    ): ScopedTag = {
 
-    tag(Scope.empty, term, static)
+    val addr = addrForTree(parent, pat.name)
+    ScopedTag(scope, pat.name.toString, static, addr)
+  }
+
+  private def tagForCtor(
+      parent: Tree,
+      param: Term.Param,
+      static: Boolean
+    ): ScopedTag = {
+
+    val addr = addrForTree(parent, param.name)
+    ScopedTag(Scope.empty, param.name.value, static, addr)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be
   // static. Even though it can be accessed from the outside, it is very
   // unlikely to ever be.
-  private def tagForImplicitClassParam(param: Term.Param) = tag(param, true)
+  private def tagForImplicitClassParam(parent: Tree, param: Term.Param) =
+    tagForCtor(parent, param, true)
 
   // When generating tags for Ctors of classes we need to see if it is a case
   // class. If it is, then params IN THE FIRST PARAM GROUP with no mods are
   // NOT static. Other params are still static.
   private def tagsForCtorParams(
+      parent: Tree,
       isCase: Boolean,
       paramss: Seq[Seq[Term.Param]]
     ): Seq[ScopedTag] = {
@@ -234,13 +247,13 @@ object TagGenerator {
           if (isCase) isStatic(Scope.empty, p.mods)
           else isStaticCtorParam(p)
         first.map(
-          p => tag(p, firstIsStatic(p))
+          p => tagForCtor(parent, p, firstIsStatic(p))
         ) ++
           (for {
             pGroup <- rem
             param <- pGroup
           } yield {
-            tag(param, isStaticCtorParam(param))
+            tagForCtor(parent, param, isStaticCtorParam(param))
           })
       case Seq() => Nil
     }
