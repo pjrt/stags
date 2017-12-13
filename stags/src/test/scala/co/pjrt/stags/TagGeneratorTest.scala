@@ -427,5 +427,56 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         )
       actual should contain theSameElementsAs expected
     }
+
+    "should generate the right address for a object" in {
+
+      val testFile =
+        """
+      |package a.b.c
+      |
+      |@typeclassish
+      |@isshs private object SomeObj {
+      | @someMacro
+      | def hello(name: String) = name
+      |
+      | def hello2(name: String) =
+      |   name
+      |
+      | @combo
+      | @someTag protected def hi(name: String) = {
+      |   name
+      | }
+      |
+      | @anotherMacro
+      | val (a, b, c) = someTriple
+      |
+      | def e: Long = 2
+      |}
+      """.stripMargin
+
+      val defAddr = "/def \\zshello(name: String) = name/"
+      val defAddr2 = "/protected def \\zshi(name: String) = {/"
+      val defAddr3 = "/def \\zshello2(name: String) =/"
+      val classAddr = "/private object \\zsSomeObj {/"
+      val aAddr = "/val (\\zsa, b, c) = someTriple/"
+      val bAddr = "/val (a, \\zsb, c) = someTriple/"
+      val cAddr = "/val (a, b, \\zsc) = someTriple/"
+      val defE = "/def \\zse: Long = 2/"
+
+      val s = testFile.parse[Source].get
+      val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
+      val expected =
+        List(
+          defAddr,
+          defAddr2,
+          defAddr3,
+          classAddr,
+          aAddr,
+          bAddr,
+          cAddr,
+          defE
+        )
+      actual should contain theSameElementsAs expected
+    }
   }
 }
