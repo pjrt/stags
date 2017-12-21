@@ -161,46 +161,13 @@ object TagGenerator {
     }
   }
 
-  private def noAnnot(mods: List[Mod]) = mods.filterNot(_.is[Mod.Annot])
-  private def removeAnnotations(stat: Tree): Tree =
-    stat match {
-      case d: Defn.Val    => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Var    => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Def    => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Macro  => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Type   => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Class  => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Trait  => d.copy(mods = noAnnot(d.mods))
-      case d: Defn.Object => d.copy(mods = noAnnot(d.mods))
-
-      case d: Decl.Val  => d.copy(mods = noAnnot(d.mods))
-      case d: Decl.Var  => d.copy(mods = noAnnot(d.mods))
-      case d: Decl.Def  => d.copy(mods = noAnnot(d.mods))
-      case d: Decl.Type => d.copy(mods = noAnnot(d.mods))
-
-      case d: Term.Param => d.copy(mods = noAnnot(d.mods))
-
-      case d: Pkg.Object => d.copy(mods = noAnnot(d.mods))
-    }
-
-  private def addrForTree(tree: Tree, tagName: Name): String = {
-
-    val line = removeAnnotations(tree).tokens.takeWhile(!_.is[Token.LF])
-    val name = tagName.value
-
-    val replacement = s"\\\\zs$name"
-    val nameW = s"\\b$name\\b"
-    val search = line.syntax.replaceFirst(nameW, replacement)
-    s"/$search/"
-  }
-
   private def tagForMember(
       scope: Scope,
       member: Member,
       static: Boolean
     ): ScopedTag = {
 
-    val tagAddress = addrForTree(member, member.name)
+    val tagAddress = AddressGen.addrForTree(member, member.name)
     val tokenName = member.name.toString
 
     ScopedTag(scope, tokenName, static, tagAddress)
@@ -213,7 +180,7 @@ object TagGenerator {
       static: Boolean
     ): ScopedTag = {
 
-    val addr = addrForTree(parent, pat.name)
+    val addr = AddressGen.addrForTree(parent, pat.name)
     ScopedTag(scope, pat.name.toString, static, addr)
   }
 
@@ -223,7 +190,7 @@ object TagGenerator {
       static: Boolean
     ): ScopedTag = {
 
-    val addr = addrForTree(parent, param.name)
+    val addr = AddressGen.addrForTree(parent, param.name)
     ScopedTag(Scope.empty, param.name.value, static, addr)
   }
 
@@ -277,4 +244,44 @@ object TagGenerator {
       }
       .headOption
       .getOrElse(false)
+}
+
+private object AddressGen {
+
+  /**
+   * Generate an address for the given tree and location
+   *
+   * The tree MUST be un-modified, otherwise the original syntax gets destroyed
+   * and an address cannot be created.
+   *
+   * The tagName is used to find the line of the syntax that we care abour (we
+   * don't care about annotatons above the tag, nor about any existing body.
+   *
+   * {{{
+   * @someAnno
+   * @someOtherAnoo def x: Int = {
+   *   someCode
+   * }
+   * }}}
+   *
+   * In the example able, we only take `@someOtherAnoo def x: Int = {` as the
+   * address. Note that multi-line statements will get cut off (the tag will
+   * work regardless).
+   *
+   * The tagname is also used to determine the location of the `\zs` for better
+   * cursor location.
+   */
+  def addrForTree(tree: Tree, tagName: Name): String = {
+
+    // DESNOTE(2017-12-21, pjrt): This should always return 0 or more, otherwise
+    // scalameta wouldn't have parsed it.
+    val lineWithTagName = tagName.pos.startLine - tree.pos.startLine
+    val line = tree.tokens.syntax.lines.toList(lineWithTagName).trim
+
+    val name = tagName.value
+    val replacement = s"\\\\zs$name"
+    val nameW = s"\\b$name\\b"
+    val search = line.replaceFirst(nameW, replacement)
+    s"/$search/"
+  }
 }

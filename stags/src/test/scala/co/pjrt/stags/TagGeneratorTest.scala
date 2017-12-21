@@ -1,12 +1,15 @@
 package co.pjrt.stags
 
-import scala.meta._
+import scala.meta.{Position => _, _}
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest._
+import org.scalactic.source.Position
 
 import Utils._
 
 class TagGeneratorTest extends FreeSpec with Matchers {
+
+  import Inspectors._
 
   private def abc(q: String*): Scope =
     Scope(Seq("c", "b", "a"), q.reverse.toSeq)
@@ -380,52 +383,114 @@ class TagGeneratorTest extends FreeSpec with Matchers {
 
   "address generation" - {
 
-    "should generate the right address for a class and def" in {
+    def addrs(file: String): List[String] = {
+
+      val src = file.parse[Source].get
+      val tags = TagGenerator.generateTags(src)
+      tags.map(_.tag.tagAddress).toList
+    }
+
+    def test(
+        file: String,
+        expected: List[String]
+      )(implicit pos: Position
+      ): Assertion = {
+
+      val exp = expected.map(t => s"/$t/")
+      val actual = addrs(file)
+      forAll(exp) { e =>
+        actual should contain(e)
+      }
+    }
+
+    "should generate the correct address for defs" in {
+      val testFile =
+        """
+        |object X {
+        |  @someAnnot
+        |  def anno = x
+        |  private def hello(n: Name)(implicit x: K): Name =
+        |    n
+        |  @someAnnot
+        |  def multiline(
+        |    n: Name
+        |  ): Name = n
+        |  def helloDef(n: Name = "me"): Name = n
+        |}
+        |trait Y {
+        |  def k: Int
+        |  @SomeAnno
+        |  @someInlineAnno def k2: Int
+        |}
+        """.stripMargin
+
+      val expected =
+        List(
+          "private def \\zshello(n: Name)(implicit x: K): Name =",
+          "def \\zsanno = x",
+          "def \\zsmultiline(",
+          "def \\zshelloDef(n: Name = \"me\"): Name = n",
+          "def \\zsk: Int",
+          "@someInlineAnno def \\zsk2: Int"
+        )
+      test(testFile, expected)
+    }
+
+    "should generate the correct address for vals" in {
+      val testFile =
+        """
+        |object X {
+        |  @someAnnot
+        |  val anno = x
+        |  val hello: Name =
+        |    n
+        |  @inlineAnno val x = 2
+        |  var u = 2
+        | val (a, b, c) = someTriple
+        |}
+        |trait Y {
+        |  protected val k: Int
+        |  @SomeAnno
+        |  @someInlineAnno var k2: Int
+        |}
+        """.stripMargin
+
+      val expected =
+        List(
+          "val \\zsanno = x",
+          "val \\zshello: Name =",
+          "@inlineAnno val \\zsx = 2",
+          "var \\zsu = 2",
+          "protected val \\zsk: Int",
+          "@someInlineAnno var \\zsk2: Int",
+          "val (\\zsa, b, c) = someTriple",
+          "val (a, \\zsb, c) = someTriple",
+          "val (a, b, \\zsc) = someTriple"
+        )
+      test(testFile, expected)
+    }
+
+    "should generate the right address for a class" in {
 
       val testFile =
         """
       |package a.b.c
       |
       |@typeclassish
-      |@isshs private class SomeClass(k: SomeClass) {
+      |@isshs private class SomeClass(k: SomeClass)(
+      | l: L
+      |) {
       | @someMacro
       | def hello(name: String) = name
-      |
-      | @combo
-      | @someTag protected def hi(name: String) = {
-      |   name
-      | }
-      |
-      | @anotherMacro
-      | val (a, b, c) = someTriple
-      |
-      | def e: Long = 2
       |}
       """.stripMargin
 
-      val defAddr = "/def \\zshello(name: String) = name/"
-      val classAddr = "/private class \\zsSomeClass(k: SomeClass) {/"
-      val classAddrK = "/private class SomeClass(\\zsk: SomeClass) {/"
-      val defAddr2 = "/protected def \\zshi(name: String) = {/"
-      val aAddr = "/val (\\zsa, b, c) = someTriple/"
-      val bAddr = "/val (a, \\zsb, c) = someTriple/"
-      val cAddr = "/val (a, b, \\zsc) = someTriple/"
-      val defE = "/def \\zse: Long = 2/"
+      val classAddr = "@isshs private class \\zsSomeClass(k: SomeClass)("
+      val classAddrK = "@isshs private class SomeClass(\\zsk: SomeClass)("
+      val classAddrL = "\\zsl: L"
 
-      val s = testFile.parse[Source].get
-      val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
-      val expected =
-        List(
-          defAddr,
-          defAddr2,
-          classAddr,
-          classAddrK,
-          aAddr,
-          bAddr,
-          cAddr,
-          defE
-        )
-      actual should contain theSameElementsAs expected
+      val expected = List(classAddr, classAddrK, classAddrL)
+      test(testFile, expected)
     }
 
     "should generate the right address for a object" in {
@@ -436,47 +501,13 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |
       |@typeclassish
       |@isshs private object SomeObj {
-      | @someMacro
-      | def hello(name: String) = name
-      |
-      | def hello2(name: String) =
-      |   name
-      |
-      | @combo
-      | @someTag protected def hi(name: String) = {
-      |   name
-      | }
-      |
-      | @anotherMacro
-      | val (a, b, c) = someTriple
-      |
-      | def e: Long = 2
+      | def x = 2
       |}
       """.stripMargin
 
-      val defAddr = "/def \\zshello(name: String) = name/"
-      val defAddr2 = "/protected def \\zshi(name: String) = {/"
-      val defAddr3 = "/def \\zshello2(name: String) =/"
-      val classAddr = "/private object \\zsSomeObj {/"
-      val aAddr = "/val (\\zsa, b, c) = someTriple/"
-      val bAddr = "/val (a, \\zsb, c) = someTriple/"
-      val cAddr = "/val (a, b, \\zsc) = someTriple/"
-      val defE = "/def \\zse: Long = 2/"
+      val objAddr = "@isshs private object \\zsSomeObj {"
 
-      val s = testFile.parse[Source].get
-      val actual = TagGenerator.generateTags(s).map(_.tag.tagAddress)
-      val expected =
-        List(
-          defAddr,
-          defAddr2,
-          defAddr3,
-          classAddr,
-          aAddr,
-          bAddr,
-          cAddr,
-          defE
-        )
-      actual should contain theSameElementsAs expected
+      test(testFile, List(objAddr))
     }
   }
 }
