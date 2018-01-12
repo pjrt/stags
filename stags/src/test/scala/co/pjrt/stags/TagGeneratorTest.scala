@@ -305,7 +305,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~> Seq(
-      (Scope.empty, "Class", false),
+      (Scope.empty, "Class", true),
       (Scope.empty, "x", true)
     )
   }
@@ -379,6 +379,27 @@ class TagGeneratorTest extends FreeSpec with Matchers {
         (abc("A"), "x", true)
       )
 
+  }
+
+  "should mark implicit vals and defs as static" in {
+
+    val tf =
+      """
+      |package a.b.c
+      |@typeclass trait C[A] {
+      |  def f(a: A): Int
+      |}
+      |object C {
+      | implicit val intInst: C[Int] = 1
+      | implicit def listInst[A]: C[List[A]] = 1
+      }
+      """.stripMargin
+
+    tf ~>
+      List(
+        (abc("C"), "intInst", true),
+        (abc("C"), "listInst", true)
+      )
   }
 
   "address generation" - {

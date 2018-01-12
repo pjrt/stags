@@ -229,9 +229,19 @@ object TagGenerator {
   private def isStaticCtorParam(param: Term.Param) =
     param.mods.isEmpty || isStatic(Scope.empty, param.mods)
 
+  // DESNOTE(2018-01-12, pjrt): Set of cases when we set a tag to static (making
+  // it lower priority when doing vim searches).
+  //
+  // 1. Implicits: These are rarely accessed via an identifier (instead being
+  //    used by the implicit system).
+  // 2. Things marked by a plain `private` or `private[this]`
+  // 3. Things marked by `private[x]` where `x` is an encompasing scope defined
+  //    in the same file as the thing (ie: the thing can only be accessed from
+  //    the file it is defined).
   private def isStatic(prefix: Scope, mods: Seq[Mod]): Boolean =
     mods
       .collect {
+        case Mod.Implicit()                           => true
         case Mod.Private(Name.Anonymous())            => true
         case Mod.Private(Term.This(Name.Anonymous())) => true
         case Mod.Private(Name.Indeterminate(name))    =>
