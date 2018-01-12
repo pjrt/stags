@@ -11,7 +11,7 @@ coursier bootstrap co.pjrt:stags-cli_2.12:0.2.6 -o stags
 If you want to use `stags` tag generation as a library, you can add it to sbt with:
 
 ```
-libraryDependencies += "co.pjrt" % "stags_2.12" % "0.2.6"
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.3.0"
 ```
 
 ## Usage
@@ -77,6 +77,8 @@ Other cases that are marked as static are:
 * the single field in an implicit class/case class
   * `implicit class X(val x: Int)` <- `x` is static
   * this is done because chances are that `x` will never be accessed anywhere but this file
+* all implicit things (val, defs, class, etc)
+  * these things are rarely, if ever, accessed via their tokens
 
 ### Qualified tags
 
