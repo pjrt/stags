@@ -85,6 +85,8 @@ object TagGenerator {
       // it looks like there should be a way.
       case d: Defn.Def =>
         Seq(tagForMember(scope, d, getStatic(d.mods)))
+      case d: Defn.Macro =>
+        Seq(tagForMember(scope, d, getStatic(d.mods)))
       case d: Decl.Def => Seq(tagForMember(scope, d, getStatic(d.mods)))
       case d: Defn.Val =>
         d.pats.flatMap(getFromPats(scope, d.mods, _, forceChildrenToStatic, d))

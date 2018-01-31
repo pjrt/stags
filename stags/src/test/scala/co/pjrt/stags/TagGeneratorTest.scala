@@ -402,6 +402,23 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       )
   }
 
+  "should generate tags for macro defs" in {
+
+    val t =
+      """
+      |package a.b.c
+      |object T {
+      | def someFunc: Int =
+      |   macro SomeMacro.func
+      |}""".stripMargin
+
+    t ~>
+      List(
+        (abc("T"), "someFunc", false),
+        (abc(), "T", false)
+      )
+  }
+
   "address generation" - {
 
     def addrs(file: String): List[String] = {
