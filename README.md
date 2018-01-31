@@ -5,13 +5,13 @@
 Using Coursier:
 
 ```bash
-coursier bootstrap co.pjrt:stags-cli_2.12:0.3.0 -o stags
+coursier bootstrap co.pjrt:stags-cli_2.12:0.3.1 -o stags
 ```
 
 If you want to use `stags` tag generation as a library, you can add it to sbt with:
 
 ```
-libraryDependencies += "co.pjrt" % "stags_2.12" % "0.3.0"
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.3.1"
 ```
 
 ## Usage
