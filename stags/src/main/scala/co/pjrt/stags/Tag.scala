@@ -30,10 +30,11 @@ object ScopedTag {
       scope: Scope,
       tokenName: String,
       isStatic: Boolean,
-      tagAddress: String
+      tagAddress: String,
+      kind: String
     ): ScopedTag = {
 
-    ScopedTag(scope, Tag(tokenName, isStatic, tagAddress))
+    ScopedTag(scope, Tag(tokenName, isStatic, tagAddress, kind))
   }
 }
 
@@ -44,10 +45,14 @@ object ScopedTag {
  * It does not contain the filename since that's information that exists
  * outside of the syntax tree.
  */
-final case class Tag(tagName: String, isStatic: Boolean, tagAddress: String) {
+final case class Tag(
+    tagName: String,
+    isStatic: Boolean,
+    tagAddress: String,
+    kind: String) {
 
   override def toString: String =
-    s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $tagAddress)"
+    s"Tag($tagName, ${if (isStatic) "static" else "non-static"}, $tagAddress, $kind)"
 }
 
 /**
@@ -60,8 +65,8 @@ final case class TagLine(tag: Tag, filePath: Path) {
   private final val term = ";\""
   private final val tab = "\t"
 
-  private def extras(fields: Seq[(String, String)]) =
-    term + tab + fields.map(t => t._1 + ":" + t._2).mkString(tab)
+  private def extras(fields: List[(String, String)]) =
+    term + tab + (tag.kind :: fields.map(t => t._1 + ":" + t._2)).mkString(tab)
 
   /**
    * Given a [[Tag]] and a file name, create a vim tag line
@@ -71,12 +76,9 @@ final case class TagLine(tag: Tag, filePath: Path) {
   final val vimTagLine: String = {
     import tag._
 
-    val static =
-      if (isStatic) Seq(("file" -> ""))
-      else Seq.empty
+    val static = if (isStatic) Some("file" -> "") else None
 
-    val langTag = "language" -> "scala"
-    val fields = static :+ langTag
+    val fields = (static :: Nil).flatten
     List(tagName, filePath.toString, tagAddress).mkString(tab) + extras(fields)
   }
 

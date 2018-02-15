@@ -163,6 +163,43 @@ object TagGenerator {
     }
   }
 
+  /**
+   * generate a kind of the member.
+   *
+   * d: "data type" (case class)
+   * c: class
+   * f: function (def)
+   * v: vals
+   * b: vars (which are "bad")
+   * i: "interface" (trait)
+   * m: macros
+   * a: type "alias"
+   * po: package object
+   *
+   * m: a ctor param
+   *
+   * For declarations (ie: undefined members in traits), a `u` is prepended
+   */
+  private def generateKind(t: Tree): String =
+    t match {
+      case c: Defn.Class  => if (c.isCaseClass) "d" else "c"
+      case _: Defn.Object => "o"
+      case _: Defn.Def    => "f"
+      case _: Defn.Val    => "v"
+      case _: Defn.Var    => "b"
+      case _: Defn.Trait  => "i"
+      case _: Defn.Macro  => "m"
+      case _: Defn.Type   => "a"
+
+      case _: Decl.Def  => "uf"
+      case _: Decl.Val  => "uv"
+      case _: Decl.Var  => "ub"
+      case _: Decl.Type => "ua"
+
+      case _: Pkg.Object => "po"
+      case p: Term.Param => "m"
+    }
+
   private def tagForMember(
       scope: Scope,
       member: Member,
@@ -171,8 +208,9 @@ object TagGenerator {
 
     val tagAddress = AddressGen.addrForTree(member, member.name)
     val tokenName = member.name.toString
+    val kind = generateKind(member)
 
-    ScopedTag(scope, tokenName, static, tagAddress)
+    ScopedTag(scope, tokenName, static, tagAddress, kind)
   }
 
   private def patTag(
@@ -183,7 +221,9 @@ object TagGenerator {
     ): ScopedTag = {
 
     val addr = AddressGen.addrForTree(parent, pat.name)
-    ScopedTag(scope, pat.name.toString, static, addr)
+    // DESNOTE(2018-02-15, pjrt): For pats, we use the parent's kind (val, var).
+    val kind = generateKind(parent)
+    ScopedTag(scope, pat.name.toString, static, addr, kind)
   }
 
   private def tagForCtor(
@@ -193,7 +233,8 @@ object TagGenerator {
     ): ScopedTag = {
 
     val addr = AddressGen.addrForTree(parent, param.name)
-    ScopedTag(Scope.empty, param.name.value, static, addr)
+    val kind = generateKind(param)
+    ScopedTag(Scope.empty, param.name.value, static, addr, kind)
   }
 
   // When we are dealing with implicit classes, the parameter oughts to be

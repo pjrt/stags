@@ -26,20 +26,20 @@ class TagLineTest extends FreeSpec with Matchers {
   "Vim Tag line" - {
     "should produce a complete non-static tag line" in {
       val addr = "val \\zstagName = 2"
-      val t = Tag("tagName", false, addr)
+      val t = Tag("tagName", false, addr, "k")
 
       val testFile = Path.fromString("TestFile.scala")
       TagLine(t, testFile).vimTagLine shouldBe
-        s"""tagName\t$testFile\t${addr};"\tlanguage:scala"""
+        s"""tagName\t$testFile\t${addr};"\tk"""
     }
 
     "should produce a complete static tag line" in {
       val addr = "val \\zstagName = 2"
-      val t = Tag("tagName", true, addr)
+      val t = Tag("tagName", true, addr, "k")
 
       val testFile = Path.fromString("TestFile.scala")
       TagLine(t, testFile).vimTagLine shouldBe
-        s"""tagName\t$testFile\t${addr};"\tfile:\tlanguage:scala"""
+        s"""tagName\t$testFile\t${addr};"\tk\tfile:"""
     }
   }
 
@@ -54,7 +54,7 @@ class TagLineTest extends FreeSpec with Matchers {
 
       val target = Path.fromString(targetS)
       val filePath = Path.fromString(filePathS)
-      val tag = Tag("tagName", false, "some-addr")
+      val tag = Tag("tagName", false, "some-addr", "k")
 
       TagLine(tag, filePath)
         .relativize(target)
@@ -163,7 +163,7 @@ class TagLineTest extends FreeSpec with Matchers {
   }
 
   def mkTagFromIdent(ident: String): TagLine = {
-    val t = Tag(ident, false, "some-addr")
+    val t = Tag(ident, false, "some-addr", "k")
 
     val testFile = Path.fromString("TestFile.scala")
     TagLine(t, testFile)

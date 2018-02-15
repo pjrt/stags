@@ -4,11 +4,9 @@ import scala.meta._
 
 package object stags {
 
-  type TagPosition = (Int, Int)
-
   implicit class DefnClassOps(val cls: Defn.Class) extends AnyVal {
 
-    private def containsMod(m: Mod): Boolean =
+    def containsMod(m: Mod): Boolean =
       cls.mods.exists((c: Mod) => c.structure == m.structure)
 
     def isCaseClass: Boolean =
