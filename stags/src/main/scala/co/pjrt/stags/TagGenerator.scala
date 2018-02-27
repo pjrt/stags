@@ -1,12 +1,12 @@
 package co.pjrt.stags
 
 import java.io.File
-
 import scala.meta._
 
 import co.pjrt.stags.paths.Path
 
 object TagGenerator {
+
 
   /**
    * Given a Scalameta Source, generate a sequence of [[Tag]]s for it
@@ -143,6 +143,7 @@ object TagGenerator {
 
     val static = staticParent || isStatic(scope, mods)
     def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent, parent)
+    
     pat match {
       case p: Pat.Var      => Seq(patTag(scope, parent, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
@@ -159,6 +160,9 @@ object TagGenerator {
       case _: Lit =>
         // DESNOTE(2017-07-14, pjrt): This is for patterns like `val 1 = x`
         // For those, we should not generate tags (of course)
+        Seq.empty
+      case _ => 
+        Console.err.println(s"Error matching $pat in line ${parent.syntax}")
         Seq.empty
     }
   }
@@ -332,8 +336,8 @@ private object AddressGen {
     val line = tree.tokens.syntax.lines.toList(lineWithTagName).trim
 
     val name = tagName.value
-    val replacement = s"\\\\zs$name"
-    val nameW = s"\\b$name\\b"
+    val replacement = s"\\\\zs$name".replaceAllLiterally("$","\\$")
+    val nameW = s"\\b\\Q$name\\E\\b" // wrap $name with regex quote \Q\E; and word bound \b\b
     val search = line.replaceFirst(nameW, replacement)
     s"/$search/"
   }

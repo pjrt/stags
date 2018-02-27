@@ -59,8 +59,9 @@ class TagLineTest extends FreeSpec with Matchers {
       TagLine(tag, filePath)
         .relativize(target)
         .filePath
-        .toString shouldBe expectedS
-
+        .toString
+        .replaceAllLiterally("\\","/") //windows path sep is backwards
+        .shouldBe(expectedS)
     }
 
     "should modify the filepath to be relative from the target in" - {

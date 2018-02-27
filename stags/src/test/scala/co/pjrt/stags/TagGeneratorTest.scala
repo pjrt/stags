@@ -337,6 +337,32 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       (abc("SomeThing"), "some", false)
     )
   }
+  "regex dangerous methods names should create tags" in {
+    val testFile =
+      """
+      |package a.b.c
+      |object DangerMethods {
+      |  def *(v:Int): Int =  ???
+      |  def **(v:Int): Int =  ???
+      |  def ***(v:Int): Int =  ???
+      |  def ?(v:Int):Boolean =  ???
+      |  def ^(v:Int):Boolean =  ???
+      |  def question$: Int =  ???
+      |  def x$u: Int =  ???
+      |}
+      """.stripMargin
+
+    testFile ~> Seq(
+      (abc(), "DangerMethods", false),
+      (abc("DangerMethods"), "*", false),
+      (abc("DangerMethods"), "**", false),
+      (abc("DangerMethods"), "***", false),
+      (abc("DangerMethods"), "?", false),
+      (abc("DangerMethods"), "^", false),
+      (abc("DangerMethods"), "question$", false),
+      (abc("DangerMethods"), "x$u", false)
+    )
+  }
 
   "Decl defs should create tags" in {
     val testFile =
@@ -352,6 +378,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       (Scope.empty, "declDef", false)
     )
   }
+
 
   "should ignore @annotations" in {
     val testFile =
