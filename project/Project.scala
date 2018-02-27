@@ -29,7 +29,7 @@ object ProjectPlugin extends AutoPlugin {
   override def buildSettings =
     Seq(
       organization := "co.pjrt",
-      scalaVersion := "2.12.2",
+      scalaVersion := "2.12.4",
       releaseVersionFile := baseDirectory.value / "version.sbt",
       sonatypeProfileName := "co.pjrt",
       resolvers ++= Seq(
@@ -62,11 +62,11 @@ object ProjectPlugin extends AutoPlugin {
         setReleaseVersion,
         commitReleaseVersion,
         tagRelease,
-        ReleaseStep(action = Command.process("stags/publishSigned", _)),
-        ReleaseStep(action = Command.process("cli/publishSigned", _)),
+        releaseStepCommand("stags/publishSigned"),
+        releaseStepCommand("cli/publishSigned"),
         setNextVersion,
         commitNextVersion,
-        ReleaseStep(action = Command.process("sonatypeReleaseAll", _)),
+        releaseStepCommand("sonatypeReleaseAll"),
         pushChanges
       )
     )
@@ -76,6 +76,6 @@ object ProjectPlugin extends AutoPlugin {
       scalacOptions := scalacOps,
       scalacOptions in (Compile, console) ~=
         (_.filterNot(_ == "-Ywarn-unused-import")),
-      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.1" % "test"
+      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
     )
 }

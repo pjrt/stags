@@ -8,7 +8,7 @@ import ReleaseTransformations._
 lazy val stags =
   (project in file("stags"))
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "2.1.2"
+      libraryDependencies += "org.scalameta" %% "scalameta" % "3.3.1"
     )
 
 lazy val cli =
@@ -17,7 +17,7 @@ lazy val cli =
     .dependsOn(stags % "compile->compile;test->test")
     .settings(
       name := "stags-cli",
-      libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
+      libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),
       buildInfoPackage := "co.pjrt.stags.cli.build",
@@ -28,5 +28,10 @@ lazy val root = (project in file("."))
   .aggregate(stags, cli)
   .settings(
     // Don't publish useless root artifacts
-    packagedArtifacts := Map.empty
+    packagedArtifacts := Map.empty,
+    //--prevent project publishing https://github.com/sbt/sbt/issues/313rf
+    publish := {},
+    publishLocal := {},
+    publishM2 := {},
+    publishArtifact := false //prevent publishing the root project in sbt0.13
   )
