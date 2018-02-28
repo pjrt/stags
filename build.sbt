@@ -29,7 +29,7 @@ lazy val root = (project in file("."))
   .settings(
     // Don't publish useless root artifacts
     packagedArtifacts := Map.empty,
-    //--prevent project publishing https://github.com/sbt/sbt/issues/313rf
+    //--prevent project publishing https://github.com/sbt/sbt/issues/3136
     publish := {},
     publishLocal := {},
     publishM2 := {},
