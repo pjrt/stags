@@ -379,7 +379,6 @@ class TagGeneratorTest extends FreeSpec with Matchers {
     )
   }
 
-
   "should ignore @annotations" in {
     val testFile =
       """

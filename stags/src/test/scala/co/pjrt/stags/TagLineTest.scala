@@ -60,7 +60,7 @@ class TagLineTest extends FreeSpec with Matchers {
         .relativize(target)
         .filePath
         .toString
-        .replaceAllLiterally("\\","/") //windows path sep is backwards
+        .replaceAllLiterally("\\", "/") //windows path sep is backwards
         .shouldBe(expectedS)
     }
 
