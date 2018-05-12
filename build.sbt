@@ -18,6 +18,7 @@ lazy val cli =
     .settings(
       name := "stags-cli",
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
+      libraryDependencies += "com.martiansoftware" % "nailgun-server" % "0.9.1",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),
       buildInfoPackage := "co.pjrt.stags.cli.build",

@@ -2,7 +2,7 @@
 
 ## Installation
 
-Using Coursier:
+### Using Coursier:
 
 ```bash
 coursier bootstrap co.pjrt:stags-cli_2.12:0.3.2 -o stags
@@ -11,8 +11,34 @@ coursier bootstrap co.pjrt:stags-cli_2.12:0.3.2 -o stags
 If you want to use `stags` tag generation as a library, you can add it to sbt with:
 
 ```
-libraryDependencies += "co.pjrt" % "stags_2.12" % "0.3.3"
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.0"
 ```
+
+### Using Nailgun:
+
+You can use Coursier to create a standalone cli for starting Stags with Nailgun like this:
+
+```
+coursier bootstrap --standalone co.pjrt:stags-cli_2.12:0.4.0 \
+  -o stags_ng -f --main com.martiansoftware.nailgun.NGServer
+stags_ng & // start nailgun in background
+ng ng-alias stags co.pjrt.stags.cli.Main
+ng stags --version
+```
+
+You can then create an alias for `ng stags` if that's still too much typing.
+
+Caveats and tips:
+
+* You must call `ng ng-alias` after every restart of the nailgun server. You could create
+  a script to do this
+  * You could also simply make an alias in your terminal (ie: `alias stags=ng co.pjrt.stags.cli.Main`).
+* If you are running multiple Nailgun instances (for example, one for `stags` and one for `scalafmt`)
+  you must run one of them in a different port.
+  * In the above example, simply call `stags_ng $new_port` to run the stags ng instance in a
+    different port. Then all `ng` calls need to have the flag `--nailgun-port $new_port` in them.
+  * You could in theory simply feed both jars (ie: stags and scalafmt) into the same ng instance
+    but beware this could cause classpath conflicts between the two (or more) jars.
 
 ## Usage
 
