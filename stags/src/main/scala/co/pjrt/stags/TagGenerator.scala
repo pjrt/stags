@@ -335,9 +335,14 @@ private object AddressGen {
     val line = tree.tokens.syntax.lines.toList(lineWithTagName).trim
 
     val name = tagName.value
-    val replacement = s"\\\\zs$name".replaceAllLiterally("$", "\\$")
+    val replacement = s"\\\\zs$name"
     val nameW = s"\\b\\Q$name\\E\\b" // wrap $name with regex quote \Q\E; and word bound \b\b
-    val search = line.replaceFirst(nameW, replacement)
+    val search = escapeVimChars(line).replaceFirst(nameW, replacement)
     s"/$search/"
+  }
+
+  private[this] val escapees: Set[Char] = Set('$', '\\', '/')
+  private[this] def escapeVimChars(str: String): String = {
+    str.flatMap(c => if (escapees.contains(c)) s"\\$c" else s"$c")
   }
 }

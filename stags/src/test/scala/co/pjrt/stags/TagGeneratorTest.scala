@@ -349,6 +349,7 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |  def ^(v:Int):Boolean =  ???
       |  def question$: Int =  ???
       |  def x$u: Int =  ???
+      |  def asV: Int \/ Boolean =  ???
       |}
       """.stripMargin
 
@@ -360,7 +361,8 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       (abc("DangerMethods"), "?", false),
       (abc("DangerMethods"), "^", false),
       (abc("DangerMethods"), "question$", false),
-      (abc("DangerMethods"), "x$u", false)
+      (abc("DangerMethods"), "x$u", false),
+      (abc("DangerMethods"), "asV", false)
     )
   }
 
@@ -572,6 +574,27 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       val objAddr = "@isshs private object \\zsSomeObj {"
 
       test(testFile, List(objAddr))
+    }
+
+    "should escape vim special characters" in {
+
+      val testFile =
+        """
+        |package a.b.c
+        |object D {
+        | def asV: Int \/ Bool = ???
+        | class \/-()
+        |}
+        """.stripMargin
+
+      val objAddr = """def \zsasV: Int \\\/ Bool = ???"""
+      // DESNOTE(2018-05-12, pjrt): The `\/` is too much for how we are currently
+      // handling the insertion of `\zs`. These kinds of classes aren't common
+      // so I'm not bothering to fix it.
+      val objAddr2 = """class \\\/-()"""
+
+      test(testFile, List(objAddr, objAddr2))
+
     }
   }
 }
