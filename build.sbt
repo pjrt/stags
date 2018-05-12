@@ -8,7 +8,7 @@ import ReleaseTransformations._
 lazy val stags =
   (project in file("stags"))
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "2.1.2"
+      libraryDependencies += "org.scalameta" %% "scalameta" % "3.7.3"
     )
 
 lazy val cli =
