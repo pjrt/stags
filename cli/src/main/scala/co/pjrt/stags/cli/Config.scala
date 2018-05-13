@@ -1,19 +1,19 @@
 package co.pjrt.stags.cli
 
 import java.io.File
+import java.nio.file.Path
 
 import co.pjrt.stags.GeneratorConfig
-import co.pjrt.stags.paths.Path
 
 /**
  * @param files to generate tags for
  */
 final case class Config(
-    files: Seq[File],
+    files: Seq[Path],
     outputFile: Option[Path],
     qualifiedDepth: Int) {
 
-  def appendFile(file: File): Config =
+  def appendFile(file: Path): Config =
     this.copy(files = files :+ file)
 
   def setOutputFile(file: Path): Config =
@@ -40,7 +40,7 @@ object Config {
     arg[File]("<file>...")
       .required()
       .unbounded()
-      .action((f, c) => c.appendFile(f))
+      .action((f, c) => c.appendFile(f.toPath))
       .text("files to generate tags for. Directories are recursively searched")
 
     opt[File]('o', "output")
@@ -51,7 +51,7 @@ object Config {
           if (!f.isDirectory) success
           else failure("option --output can't be a directory")
       )
-      .action((f, c) => c.setOutputFile(Path.fromNio(f.toPath)))
+      .action((f, c) => c.setOutputFile(f.toPath))
       .text("location of the tags file. Default: ./tags")
 
     opt[Int]('d', "qualified-depth")

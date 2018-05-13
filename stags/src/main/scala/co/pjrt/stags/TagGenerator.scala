@@ -3,8 +3,6 @@ package co.pjrt.stags
 import java.io.File
 import scala.meta._
 
-import co.pjrt.stags.paths.Path
-
 object TagGenerator {
 
   /**
@@ -13,17 +11,10 @@ object TagGenerator {
   def generateTags(source: Source): Seq[ScopedTag] =
     source.stats.flatMap(tagsForTopLevel(_))
 
-  def generateTagsForFile(
-      file: File
-    )(implicit conf: GeneratorConfig
-    ): Either[Parsed.Error, Seq[TagLine]] =
+  def generateTagsForFile(file: File): Either[Parsed.Error, Seq[ScopedTag]] =
     file.parse[Source] match {
       case Parsed.Success(s) =>
-        Right(
-          generateTags(s).flatMap(
-            _.mkTagLines(Path.fromNio(file.toPath), conf.qualifiedDepth)
-          )
-        )
+        Right(generateTags(s))
       case err: Parsed.Error =>
         Left(err)
 
@@ -31,8 +22,7 @@ object TagGenerator {
 
   def generateTagsForFileName(
       fileName: String
-    )(implicit conf: GeneratorConfig
-    ): Either[Parsed.Error, Seq[TagLine]] =
+    ): Either[Parsed.Error, Seq[ScopedTag]] =
     generateTagsForFile(new File(fileName))
 
   private def tagsForTopLevel(stat: Stat): Seq[ScopedTag] = {

@@ -1,36 +1,45 @@
 package co.pjrt.stags.cli
 
 import java.io.{File, PrintStream, PrintWriter}
+import java.nio.file.Paths
 
 import scala.meta.Parsed
 
-import co.pjrt.stags.{TagGenerator, TagLine}
-import co.pjrt.stags.paths.Path
+import co.pjrt.stags._
+import co.pjrt.stags.paths.AbsolutePath
 
 object Cli {
 
-  final def run_(config: Config): Unit = {
-    run(config)
+  final def run_(cwd: AbsolutePath, config: Config): Unit = {
+    run(cwd, config)
     ()
   }
 
-  final def run(config: Config): File = {
-    val files = config.files.flatMap(fetchScalaFiles)
-    val outPath = config.outputFile.getOrElse(Path.fromString("tags"))
+  final def run(cwd: AbsolutePath, config: Config): File = {
+    val files =
+      config.files.flatMap(
+        f => fetchScalaFiles(AbsolutePath.fromPath(cwd, f).toFile)
+      )
+    val outPath = config.outputFile.getOrElse(Paths.get("tags"))
+    val out = AbsolutePath.fromPath(cwd, outPath)
+
+    def toTagLine(file: AbsolutePath, scoped: ScopedTag): Seq[TagLine] =
+      scoped.mkTagLines(file.relativeAgainst(out), config.qualifiedDepth)
+
     val tags: Seq[TagLine] =
       files.flatMap(
         f =>
           TagGenerator
-            .generateTagsForFile(f)(config.generatorConfig)
+            .generateTagsForFile(f)
             .fold((e: Parsed.Error) => {
               warn(f, e.message)
               Seq.empty
             }, identity)
-            .map(_.relativize(outPath))
+            .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
       )
 
     val sortedTags = TagLine.foldCaseSorting(tags)
-    val outputFile = outPath.nioPath.toFile
+    val outputFile = out.toFile
     writeFile(outputFile, sortedTags.map(_.vimTagLine))
     outputFile
   }

@@ -1,8 +1,8 @@
 package co.pjrt.stags
 
-import scala.util.Sorting
+import java.nio.file.Path
 
-import co.pjrt.stags.paths.Path
+import scala.util.Sorting
 
 /**
  * A [[ScopedTag]] is a [[Tag]] along with a scope that determines the
@@ -56,7 +56,7 @@ final case class Tag(
 }
 
 /**
- * A [[TagLine]] is simple a [[Tag]] and a [[co.pjrt.stags.paths.Path]]
+ * A [[TagLine]] is simple a [[Tag]] and a Path
  *
  * It represents the final, file-representation of a tag.
  */
@@ -80,15 +80,6 @@ final case class TagLine(tag: Tag, filePath: Path) {
 
     val fields = (static :: Nil).flatten
     List(tagName, filePath.toString, tagAddress).mkString(tab) + extras(fields)
-  }
-
-  /**
-   * Modify the [[filePath]] to be relative to the given [[co.pjrt.stags.paths.Path]]
-   */
-  final def relativize(outputPath: Path): TagLine = {
-    // DESNOTE(2017-04-04, pjrt) Due to the way `Paths.relativize` works, we
-    // need to get the parent of the output file.
-    TagLine(tag, outputPath.getParent.relativize(filePath))
   }
 }
 
