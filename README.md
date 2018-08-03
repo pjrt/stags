@@ -5,13 +5,13 @@
 ### Using Coursier:
 
 ```bash
-coursier bootstrap co.pjrt:stags-cli_2.12:0.4.1 -o stags
+coursier bootstrap co.pjrt:stags-cli_2.12:0.4.2 -o stags
 ```
 
 If you want to use `stags` tag generation as a library, you can add it to sbt with:
 
 ```
-libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.1"
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.2"
 ```
 
 ### Using Nailgun:
@@ -19,7 +19,7 @@ libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.1"
 You can use Coursier to create a standalone cli for starting Stags with Nailgun like this:
 
 ```
-coursier bootstrap --standalone co.pjrt:stags-cli_2.12:0.4.1 \
+coursier bootstrap --standalone co.pjrt:stags-cli_2.12:0.4.2 \
   -o stags_ng -f --main com.martiansoftware.nailgun.NGServer
 stags_ng & // start nailgun in background
 ng ng-alias stags co.pjrt.stags.cli.Main
