@@ -2,8 +2,9 @@ package co.pjrt.stags.cli
 
 import java.io.{File, PrintStream, PrintWriter}
 import java.nio.file.Paths
+import scala.util.Try
 
-import scala.meta.Parsed
+import scala.meta._
 
 import co.pjrt.stags._
 import co.pjrt.stags.paths.AbsolutePath
@@ -27,16 +28,15 @@ object Cli {
       scoped.mkTagLines(file.relativeAgainst(out), config.qualifiedDepth)
 
     val tags: Seq[TagLine] =
-      files.flatMap(
-        f =>
-          TagGenerator
-            .generateTagsForFile(f)
-            .fold((e: Parsed.Error) => {
-              warn(f, e.message)
-              Seq.empty
-            }, identity)
-            .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
-      )
+      files.flatMap { f =>
+        // DESNOTE(2018-08-03, pjrt): Though parse returns a failure, it can still
+        // throw exceptions. See #16
+        val parsed: Either[String, Source] =
+          Try(f.parse[Source]).fold(t => Left(t.getMessage), parsedToEither)
+        parsed
+          .fold(e => warn(f, e), TagGenerator.generateTags)
+          .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
+      }
 
     val sortedTags = TagLine.foldCaseSorting(tags)
     val outputFile = out.toFile
@@ -45,11 +45,15 @@ object Cli {
   }
 
   private lazy val err: PrintStream = System.err
-  private def warn(file: File, msg: String): Unit = {
+  private def warn(file: File, msg: String): Seq[ScopedTag] = {
 
     val warnMsg = s"${LogLevel.warn} Error in ${file.getPath}: $msg"
     err.println(warnMsg)
+    Seq.empty
   }
+
+  private def parsedToEither(p: Parsed[Source]): Either[String, Source] =
+    p.toEither.fold(e => Left(e.message), Right(_))
 
   private def isScalaFile(file: File) =
     file.getName.endsWith(".scala")
