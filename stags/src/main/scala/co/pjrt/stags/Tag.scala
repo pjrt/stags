@@ -92,12 +92,8 @@ object TagLine {
    * search when `ignorecase` is set. See `:h tags-file-format`
    */
   final def foldCaseSorting(tags: Seq[TagLine]): Seq[TagLine] = {
-    implicit val sorting: Ordering[TagLine] =
-      Ordering.fromLessThan(
-        (x, y) => x.tag.tagName.toUpperCase < y.tag.tagName.toUpperCase
-      )
 
-    Sorting.stableSort(tags)(implicitly, sorting)
+    tags.sortBy(_.tag.tagName.toUpperCase)
   }
 
   /**
