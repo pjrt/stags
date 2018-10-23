@@ -8,7 +8,7 @@ import ReleaseTransformations._
 lazy val stags =
   (project in file("stags"))
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "3.7.3"
+      libraryDependencies += "org.scalameta" %% "scalameta" % "4.0.0"
     )
 
 lazy val cli =
@@ -17,7 +17,7 @@ lazy val cli =
     .dependsOn(stags % "compile->compile;test->test")
     .settings(
       name := "stags-cli",
-      libraryDependencies += "com.github.scopt" %% "scopt" % "3.5.0",
+      libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
       libraryDependencies += "com.martiansoftware" % "nailgun-server" % "0.9.1",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),

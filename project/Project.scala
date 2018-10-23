@@ -29,7 +29,7 @@ object ProjectPlugin extends AutoPlugin {
   override def buildSettings =
     Seq(
       organization := "co.pjrt",
-      scalaVersion := "2.12.2",
+      scalaVersion := "2.12.7",
       releaseVersionFile := baseDirectory.value / "version.sbt",
       sonatypeProfileName := "co.pjrt",
       resolvers ++= Seq(
