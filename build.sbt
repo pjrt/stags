@@ -13,7 +13,7 @@ lazy val stags =
 
 lazy val cli =
   (project in file("cli"))
-    .enablePlugins(BuildInfoPlugin)
+    .enablePlugins(BuildInfoPlugin, JavaAppPackaging, GraalVMNativeImagePlugin)
     .dependsOn(stags % "compile->compile;test->test")
     .settings(
       name := "stags-cli",
