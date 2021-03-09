@@ -21,7 +21,12 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
       ._1
 
   final def mkTagLines(path: Path, limit: Int): Seq[TagLine] =
+    mkScopedTags(limit).map(TagLine(_, path.toString))
+
+  final def mkJarTagLine(jar: Path, entry: String, limit: Int): Seq[TagLine]= {
+    val path = s"zipline:${jar.toString}::$entry"
     mkScopedTags(limit).map(TagLine(_, path))
+  }
 }
 
 object ScopedTag {
@@ -60,7 +65,7 @@ final case class Tag(
  *
  * It represents the final, file-representation of a tag.
  */
-final case class TagLine(tag: Tag, filePath: Path) {
+final case class TagLine(tag: Tag, filePath: String) {
 
   private final val term = ";\""
   private final val tab = "\t"
@@ -79,7 +84,7 @@ final case class TagLine(tag: Tag, filePath: Path) {
     val static = if (isStatic) Some("file" -> "") else None
 
     val fields = (static :: Nil).flatten
-    List(tagName, filePath.toString, tagAddress).mkString(tab) + extras(fields)
+    List(tagName, filePath, tagAddress).mkString(tab) + extras(fields)
   }
 }
 

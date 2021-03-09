@@ -34,7 +34,7 @@ class TagLineTest extends FreeSpec with Matchers {
       val t = Tag("tagName", false, addr, "k")
 
       val testFile = AbsolutePath.fromPath(cwd, Paths.get("TestFile.scala"))
-      TagLine(t, testFile.path).vimTagLine shouldBe
+      TagLine(t, testFile.path.toString).vimTagLine shouldBe
         s"""tagName\t$testFile\t${addr};"\tk"""
     }
 
@@ -43,7 +43,7 @@ class TagLineTest extends FreeSpec with Matchers {
       val t = Tag("tagName", true, addr, "k")
 
       val testFile = AbsolutePath.fromPath(cwd, Paths.get("TestFile.scala"))
-      TagLine(t, testFile.path).vimTagLine shouldBe
+      TagLine(t, testFile.path.toString).vimTagLine shouldBe
         s"""tagName\t$testFile\t${addr};"\tk\tfile:"""
     }
   }
@@ -52,7 +52,7 @@ class TagLineTest extends FreeSpec with Matchers {
     val t = Tag(ident, false, "some-addr", "k")
 
     val testFile = Paths.get("TestFile.scala")
-    TagLine(t, testFile)
+    TagLine(t, testFile.toString)
   }
   "ordering" - {
     "foldcase" - {
