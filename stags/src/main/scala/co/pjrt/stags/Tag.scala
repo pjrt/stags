@@ -22,11 +22,6 @@ final case class ScopedTag(scope: Scope, tag: Tag) {
 
   final def mkTagLines(path: Path, limit: Int): Seq[TagLine] =
     mkScopedTags(limit).map(TagLine(_, path.toString))
-
-  final def mkJarTagLine(jar: Path, entry: String, limit: Int): Seq[TagLine]= {
-    val path = s"zipline:${jar.toString}::$entry"
-    mkScopedTags(limit).map(TagLine(_, path))
-  }
 }
 
 object ScopedTag {
