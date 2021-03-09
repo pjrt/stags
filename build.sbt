@@ -22,7 +22,8 @@ lazy val cli =
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),
       buildInfoPackage := "co.pjrt.stags.cli.build",
-      assemblyJarName in assembly := s"stags-${version.value}"
+      assemblyJarName in assembly := s"stags-${version.value}",
+      graalVMNativeImageOptions := Seq("--no-fallback")
     )
 
 lazy val root = (project in file("."))

@@ -20,15 +20,19 @@ object Cli {
 
   final def run(cwd: AbsolutePath, config: Config): File = {
     val files =
-      config.files.flatMap(
-        f => fetchScalaFiles(AbsolutePath.fromPath(cwd, f).toFile)
+      config.files.flatMap(f =>
+        fetchScalaFiles(AbsolutePath.fromPath(cwd, f).toFile)
       )
     val outPath = config.outputFile.getOrElse(Paths.get("tags"))
     val out = AbsolutePath.fromPath(cwd, outPath)
 
     def toTagLine(file: AbsolutePath, scoped: ScopedTag): Seq[TagLine] =
       scoped.mkTagLines(file.relativeAgainst(out), config.qualifiedDepth)
-    def toJarTagLine(jar: AbsolutePath, entryPath: String, scoped: ScopedTag): Seq[TagLine] = {
+    def toJarTagLine(
+        jar: AbsolutePath,
+        entryPath: String,
+        scoped: ScopedTag
+      ): Seq[TagLine] = {
       val jarPath = jar.relativeAgainst(out)
       val path = Paths.get(s"zipfile:${jarPath.toString}::$entryPath")
       scoped.mkTagLines(path, config.qualifiedDepth)
@@ -41,18 +45,28 @@ object Cli {
           zipFile.entries.asScala.flatMap { entry =>
             if (entry.getName.endsWith(".scala")) {
               def p = zipFile.getInputStream(entry).parse[Source]
-              Try(p).fold(t => Left(t.getMessage), parsedToEither)
-                .fold(e => warn(f.getPath + "::" + entry.getName, e), TagGenerator.generateTags)
-                .flatMap(s => toJarTagLine(AbsolutePath.fromPath(cwd, f.toPath), entry.getName, s))
-            }
-            else {
+              Try(p)
+                .fold(t => Left(t.getMessage), parsedToEither)
+                .fold(
+                  e => warn(f.getPath + "::" + entry.getName, e),
+                  TagGenerator.generateTags
+                )
+                .flatMap(s =>
+                  toJarTagLine(
+                    AbsolutePath.fromPath(cwd, f.toPath),
+                    entry.getName,
+                    s
+                  )
+                )
+            } else {
               Nil
             }
           }
         case f =>
           // DESNOTE(2018-08-03, pjrt): Though parse returns a failure, it can still
           // throw exceptions. See #16
-          Try(f.parse[Source]).fold(t => Left(t.getMessage), parsedToEither)
+          Try(f.parse[Source])
+            .fold(t => Left(t.getMessage), parsedToEither)
             .fold(e => warn(f.getPath, e), TagGenerator.generateTags)
             .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
       }

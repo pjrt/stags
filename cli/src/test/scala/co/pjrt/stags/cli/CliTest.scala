@@ -117,12 +117,11 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
       val tags = readTags(tagLoc)
       val relativizedFiles =
-        List((f1, entry1), (f2, entry2)).flatMap {
-          case (f, es) =>
-            val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
-            es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
+        List((f1, entry1), (f2, entry2)).flatMap { case (f, es) =>
+          val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
+          es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
         }
-      tags should contain theSameElementsAs(relativizedFiles)
+      tags should contain theSameElementsAs (relativizedFiles)
     }
   }
 
