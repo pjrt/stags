@@ -1,7 +1,7 @@
 package co.pjrt.stags.cli
 
 import java.io.{File, PrintStream, PrintWriter}
-import java.nio.file.Paths
+import java.nio.file.{Path, Paths}
 import java.util.zip.ZipFile
 import scala.util.Try
 import scala.collection.JavaConverters._
@@ -26,14 +26,18 @@ object Cli {
     val outPath = config.outputFile.getOrElse(Paths.get("tags"))
     val out = AbsolutePath.fromPath(cwd, outPath)
 
-    def toTagLine(file: AbsolutePath, scoped: ScopedTag): Seq[TagLine] =
-      scoped.mkTagLines(file.relativeAgainst(out), config.qualifiedDepth)
+    def modifyPath(p: AbsolutePath): Path =
+      if (config.absoluteTags) p.path else p.relativeAgainst(out)
+
+    def toTagLine(file: AbsolutePath, scoped: ScopedTag): Seq[TagLine] = {
+      scoped.mkTagLines(modifyPath(file), config.qualifiedDepth)
+    }
     def toJarTagLine(
         jar: AbsolutePath,
         entryPath: String,
         scoped: ScopedTag
       ): Seq[TagLine] = {
-      val jarPath = jar.relativeAgainst(out)
+      val jarPath = modifyPath(jar)
       val path = Paths.get(s"zipfile:${jarPath.toString}::$entryPath")
       scoped.mkTagLines(path, config.qualifiedDepth)
     }

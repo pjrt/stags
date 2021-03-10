@@ -94,7 +94,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val f2 = mkFile(up)
       val files = List(f1, f2)
-      val config = Config(files, None, 0)
+      val config = Config(files, None, false, 0)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -111,7 +111,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val (f2, entry2) = mkJar(up)
       val files = List(f1, f2)
-      val config = Config(files, None, 0)
+      val config = Config(files, None, false, 0)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -133,7 +133,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val tagLoc = AbsolutePath.fromPath(up, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), 0)
+      val config = Config(files, Some(tagLoc.path), false, 0)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
@@ -151,13 +151,28 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val down = mkDir(cwd.parent)
       val tagLoc = AbsolutePath.fromPath(down, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), 0)
+      val config = Config(files, Some(tagLoc.path), false, 0)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
       val relativizedFiles =
         files.map(AbsolutePath.unsafeAbsolute).map(_.relativeAgainst(tagLoc))
       tags shouldBe relativizedFiles
+    }
+  }
+
+  "should make the paths absolute if the absolute tag is passed" in {
+    runTest { cwd =>
+      val f1 = mkFile(cwd)
+      val up = mkDir(cwd)
+      val f2 = mkFile(up)
+      val files = List(f1, f2)
+      val config = Config(files, None, true, 0)
+      Cli.run_(cwd, config)
+
+      val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
+      val tags = readTags(tagLoc)
+      tags shouldBe files
     }
   }
 }
