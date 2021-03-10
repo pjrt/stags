@@ -276,7 +276,8 @@ After adding this plugin, we can call `sbt downloadSources`.
 This plugin will copy the source files from the cache into `target/externalSources` for a project. `stags` can then
 pick them up from there (alongside the source files).
 
-An issue with this strategy is that we must call `downloadSources` every time we add or change a dependency.
+An issue with this strategy is that we must call `downloadSources` every time we add or change a dependency. As well as requiring the retagging of
+all jars each time you want to retag the source files. This can become expensive on large multi-project repos.
 
 One way to add this to all projects without committing anything into your repos is to:
 * Place the file above in `~/.sbt/1.0/plugins/`
