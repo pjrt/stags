@@ -12,13 +12,13 @@ Copy this file somewhere in your `$PATH`.
 ### Using Coursier:
 
 ```bash
-coursier bootstrap co.pjrt:stags-cli_2.12:0.4.2 -o stags
+coursier bootstrap co.pjrt:stags-cli_2.12:0.5.0 -o stags
 ```
 
 If you want to use `stags` tag generation as a library, you can add it to sbt with:
 
 ```
-libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.2"
+libraryDependencies += "co.pjrt" % "stags_2.12" % "0.5.0"
 ```
 
 ### Using Nailgun:
@@ -26,7 +26,7 @@ libraryDependencies += "co.pjrt" % "stags_2.12" % "0.4.2"
 You can use Coursier to create a standalone cli for starting Stags with Nailgun like this:
 
 ```
-coursier bootstrap --standalone co.pjrt:stags-cli_2.12:0.4.2 \
+coursier bootstrap --standalone co.pjrt:stags-cli_2.12:0.5.0 \
   -o stags_ng -f --main com.martiansoftware.nailgun.NGServer
 stags_ng & // start nailgun in background
 ng ng-alias stags co.pjrt.stags.cli.Main
@@ -225,7 +225,7 @@ Some caveats:
 
 ## Tagging source files: Downloading source files to local project
 
-A likely more sane strategy is to instead use sbt to copy over the source jar that the project requires, and tagging only those files. For this to happen you will need a small plugin:
+Another strategy is to instead use sbt to copy over the source jar that the project requires, and tagging only those files. For this to happen you will need a small plugin:
 
 ```scala
 import sbt.Keys._
@@ -236,26 +236,29 @@ import scala.util.{Failure, Success, Try}
 object DownloadSourcesPlugin {
   val downloadSources = taskKey[Unit]("Download sources")
   val downloadSourcesLocation = settingKey[File]("Download sounds location")
-  val downloadSourcesTypes = settingKey[List[String]]("Types of sources to download")
+  val downloadSourcesTypes = settingKey[List[String]](
+    "Types of sources to download (default: javadoc, source)"
+  )
 
   def downloadSettings =
     Seq(
-      downloadSourcesLocation := target.value / "externalSources",
+      // We store all sources in one directory for all projects.
+      // This allows us to remove duplicates below, which are common in multi-projects.
+      // Change this to `target.value / "externalSources"` if you want to have one per project.
+      downloadSourcesLocation := file(".") / "target" / "externalSources",
       cleanFiles += baseDirectory.value / downloadSourcesLocation.value.toString,
       downloadSourcesTypes := List("sources"),
       downloadSources := {
         val report = updateClassifiers.value
         val log = streams.value.log
-        val _dir = downloadSourcesLocation.value.toPath
+        val dir = downloadSourcesLocation.value
         val types = downloadSourcesTypes.value
         def matchesTypes(f: File) =
           types.exists(t => f.getName().endsWith(t + ".jar"))
-        val dir =
-          if (!Files.exists(_dir)) Files.createDirectory(_dir)
-          else _dir
+        dir.mkdirs()
         report.allFiles.map {
           case target if matchesTypes(target) =>
-            val newLink = (dir.toFile / target.getName).toPath
+            val newLink = (dir / target.getName).toPath
             Try(Files.createLink(newLink, target.toPath)) match {
               case Success(_)                             => ()
               case Failure(e: FileAlreadyExistsException) => ()
@@ -268,8 +271,12 @@ object DownloadSourcesPlugin {
 }
 ```
 
+After adding this plugin, we can call `sbt downloadSources`.
+
 This plugin will copy the source files from the cache into `target/externalSources` for a project. `stags` can then
 pick them up from there (alongside the source files).
+
+An issue with this strategy is that we must call `downloadSources` every time we add or change a dependency.
 
 One way to add this to all projects without committing anything into your repos is to:
 * Place the file above in `~/.sbt/1.0/plugins/`
