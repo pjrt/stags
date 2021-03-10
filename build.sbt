@@ -17,6 +17,7 @@ lazy val cli =
     .dependsOn(stags % "compile->compile;test->test")
     .settings(
       name := "stags-cli",
+      name in GraalVMNativeImage := "stags",
       libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
       libraryDependencies += "com.martiansoftware" % "nailgun-server" % "0.9.1",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),

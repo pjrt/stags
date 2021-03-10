@@ -2,6 +2,13 @@
 
 ## Installation
 
+## Using graalvm: Recommended
+
+Requires `native-image`.
+
+Clone this repository and call `sbt cli/graalvm-native-image:packageBin`. This will create a native image in `cli/target/graalvm-native-image/stags`.
+Copy this file somewhere in your `$PATH`.
+
 ### Using Coursier:
 
 ```bash
@@ -169,4 +176,112 @@ function! QualifiedTagJump() abort
 endfunction
 
 nnoremap <silent> <C-]> :<C-u>call QualifiedTagJump()<CR>
+```
+## Tips for tagging jars
+### Vim support for jars
+Vim supports the ability to look at the contents of a zip file by default in the following way:
+
+```
+vim zipfile:/path/to/zip::/path/inside/zip
+```
+
+This will open contents of the path inside of the zip in a new buffer. Since jars are just zip files,
+we can use that to create tags for jar files. This is specially useful when wanting to tag external sources.
+
+Before we can use that though, the following settings in vim need to be disabled:
+
+```viml
+set notagrelative " Required due to the way it tries to search for the tag relative to the tags file
+
+au BufEnter zipfile:/*.scala set nomodifiable " This isn't required, but nice if you want it to behave like an IDE
+```
+
+You could get away with keeping `tagrelative` on IFF your `set tags` is set to to `./tags` and nothing else. If you search for the tags
+file outsise of the current directly, then you MUST disable `tagrelative`.
+
+With that set, we can now call `stags`, but we must pass `--absolute-files`. Since we disabled `tagrelative` we must now create tags as
+absolute tags (path to files are absolute, not relative).
+
+```bash
+stags --absolute-files -o /path/to/output ./
+```
+
+### Tagging source files: Global cache
+
+Since the `tags` setting in vim allows for multiple tag files (in order of preference), we can have a local tags files and a global one for all sources like so:
+
+```viml
+set tags=./tags,/home/user/globalTags
+```
+
+```bash
+$ cd /home/user
+$ stags --absolute-files -o globalTags /home/user/.cache/coursier/ /home/user/.ivy2/cache/
+```
+
+Some caveats:
+* This will create a massive tags file.
+* Since you can have different derisions of libraries in the cache, this will create a lot of duplicate tags (one for each version). This can lead to confusion in the future.
+
+## Tagging source files: Downloading source files to local project
+
+A likely more sane strategy is to instead use sbt to copy over the source jar that the project requires, and tagging only those files. For this to happen you will need a small plugin:
+
+```scala
+import sbt.Keys._
+import sbt._
+import java.nio.file.{FileAlreadyExistsException, Files, Path, Paths}
+import scala.util.{Failure, Success, Try}
+
+object DownloadSourcesPlugin {
+  val downloadSources = taskKey[Unit]("Download sources")
+  val downloadSourcesLocation = settingKey[File]("Download sounds location")
+  val downloadSourcesTypes = settingKey[List[String]]("Types of sources to download")
+
+  def downloadSettings =
+    Seq(
+      downloadSourcesLocation := target.value / "externalSources",
+      cleanFiles += baseDirectory.value / downloadSourcesLocation.value.toString,
+      downloadSourcesTypes := List("sources"),
+      downloadSources := {
+        val report = updateClassifiers.value
+        val log = streams.value.log
+        val _dir = downloadSourcesLocation.value.toPath
+        val types = downloadSourcesTypes.value
+        def matchesTypes(f: File) =
+          types.exists(t => f.getName().endsWith(t + ".jar"))
+        val dir =
+          if (!Files.exists(_dir)) Files.createDirectory(_dir)
+          else _dir
+        report.allFiles.map {
+          case target if matchesTypes(target) =>
+            val newLink = (dir.toFile / target.getName).toPath
+            Try(Files.createLink(newLink, target.toPath)) match {
+              case Success(_)                             => ()
+              case Failure(e: FileAlreadyExistsException) => ()
+              case Failure(e)                             => log.error(e.getMessage)
+            }
+          case _ => ()
+        }
+      }
+    )
+}
+```
+
+This plugin will copy the source files from the cache into `target/externalSources` for a project. `stags` can then
+pick them up from there (alongside the source files).
+
+One way to add this to all projects without committing anything into your repos is to:
+* Place the file above in `~/.sbt/1.0/plugins/`
+* Create a GlobalPlugin in `~/.sbt/1.0/plugins/` with the following contents
+
+```scala
+import sbt._
+
+object GlobalPlugin extends AutoPlugin {
+  override def requires = sbt.plugins.JvmPlugin
+  override def trigger = allRequirements
+
+  override def projectSettings = DownloadSourcesPlugin.downloadSettings
+}
 ```
