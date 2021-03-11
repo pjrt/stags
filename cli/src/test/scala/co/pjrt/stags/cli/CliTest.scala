@@ -88,7 +88,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
     op.toList
   }
 
-  private val allTypes = List(FileType.ScalaJar, FileType.Scala)
+  private val allTypes = List(FileType.SourcesJar, FileType.Scala)
 
   private def sameElements[A](a: List[A], b: List[A]): Assertion =
     a should contain theSameElementsAs b
@@ -206,7 +206,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
             .map(_.relativeAgainst(tagLoc))
 
         t match {
-          case FileType.ScalaJar =>
+          case FileType.SourcesJar =>
             sameElements(tags, jarFiles)
           case FileType.Scala =>
             sameElements(tags, scalaFiles)

@@ -44,7 +44,7 @@ object Cli {
 
     val tags: Seq[TagLine] =
       files.flatMap {
-        case f if isSourceJar(f) =>
+        case f if isSourcesJar(f) =>
           val zipFile = new ZipFile(f)
           zipFile.entries.asScala.flatMap { entry =>
             if (entry.getName.endsWith(".scala")) {
@@ -95,7 +95,7 @@ object Cli {
   private def isScalaFile(file: File) =
     file.getName.endsWith(".scala")
 
-  private def isSourceJar(file: File) =
+  private def isSourcesJar(file: File) =
     file.getName.endsWith("sources.jar")
 
   private def fetchScalaFiles(config: Config, file: File) = {
@@ -107,9 +107,9 @@ object Cli {
     dir.foldLeft(Seq.empty[File]) {
       case (acc, f) if (f.isDirectory) =>
         acc ++ fetchFilesFromDir(config, f.listFiles.toList)
-      case (acc, f) if isSourceJar(f) && config.canFetchScalaJar => acc :+ f
-      case (acc, f) if isScalaFile(f) && config.canFetchScala    => acc :+ f
-      case (acc, _)                                              => acc
+      case (acc, f) if isSourcesJar(f) && config.canFetchSourcesJar => acc :+ f
+      case (acc, f) if isScalaFile(f) && config.canFetchScala       => acc :+ f
+      case (acc, _)                                                 => acc
     }
 
   private def writeFile(file: File, lines: Seq[String]): Unit = {
