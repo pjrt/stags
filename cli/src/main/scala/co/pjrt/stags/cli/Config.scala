@@ -5,6 +5,26 @@ import java.nio.file.Path
 
 import co.pjrt.stags.GeneratorConfig
 
+sealed trait FileType
+object FileType {
+  def unapply(str: String): Option[FileType] =
+    str match {
+      case "scala"      => Some(Scala)
+      case "source-jar" => Some(ScalaJar)
+      case _            => None
+    }
+
+  case object Scala extends FileType // A scala source file
+  case object ScalaJar extends FileType // a source.jar file
+
+  implicit val read: scopt.Read[FileType] =
+    scopt.Read.reads[FileType] {
+      case FileType(a) => a
+      case other =>
+        throw new IllegalArgumentException(s"Unexpected file type: $other")
+    }
+}
+
 /**
  * @param files to generate tags for
  */
@@ -12,6 +32,7 @@ final case class Config(
     files: Seq[Path],
     outputFile: Option[Path],
     absoluteTags: Boolean,
+    fileTypes: Seq[FileType],
     qualifiedDepth: Int) {
 
   def appendFile(file: Path): Config =
@@ -26,6 +47,12 @@ final case class Config(
   def setAbsoluteTags(bool: Boolean): Config =
     this.copy(absoluteTags = bool)
 
+  def setFileTypes(ts: Seq[FileType]): Config =
+    this.copy(fileTypes = ts)
+
+  val canFetchScalaJar: Boolean = fileTypes.contains(FileType.ScalaJar)
+  val canFetchScala: Boolean = fileTypes.contains(FileType.Scala)
+
   lazy val generatorConfig: GeneratorConfig =
     GeneratorConfig(qualifiedDepth)
 }
@@ -33,7 +60,9 @@ final case class Config(
 object Config {
 
   implicit val zero: scopt.Zero[Config] =
-    scopt.Zero.zero(Config(Seq.empty, None, false, 1))
+    scopt.Zero.zero(
+      Config(Seq.empty, None, false, List(FileType.ScalaJar, FileType.Scala), 1)
+    )
 
   final val parser = new scopt.OptionParser[Config]("stags") {
     head("stags", build.BuildInfo.version)
@@ -66,6 +95,14 @@ object Config {
       )
       .action((i, c) => c.setQualifiedDepth(i))
       .text("depth of qualified tags. Default: 1")
+
+    opt[Seq[FileType]]("file-types")
+      .optional()
+      .valueName("<ext>[,<ext>]")
+      .action((i, c) => c.setFileTypes(i))
+      .text(
+        "limit file search to the specified file extensions. Default: scala,jar"
+      )
 
     opt[Unit]("absolute-files")
       .optional()

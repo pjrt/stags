@@ -21,7 +21,7 @@ object Cli {
   final def run(cwd: AbsolutePath, config: Config): File = {
     val files =
       config.files.flatMap(f =>
-        fetchScalaFiles(AbsolutePath.fromPath(cwd, f).toFile)
+        fetchScalaFiles(config, AbsolutePath.fromPath(cwd, f).toFile)
       )
     val outPath = config.outputFile.getOrElse(Paths.get("tags"))
     val out = AbsolutePath.fromPath(cwd, outPath)
@@ -98,21 +98,18 @@ object Cli {
   private def isSourceJar(file: File) =
     file.getName.endsWith("sources.jar")
 
-  private def fetchScalaFiles(file: File) = {
-    if (!file.isDirectory)
-      if (isScalaFile(file)) Seq(file)
-      else if (isSourceJar(file)) Seq(file)
-      else Seq.empty
-    else
-      fetchFilesFromDir(file)
+  private def fetchScalaFiles(config: Config, file: File) = {
+    if (!file.isDirectory) fetchFilesFromDir(config, List(file))
+    else fetchFilesFromDir(config, file.listFiles.toList)
   }
 
-  private def fetchFilesFromDir(dir: File): Seq[File] =
-    dir.listFiles.foldLeft(Seq.empty[File]) {
-      case (acc, f) if (f.isDirectory) => acc ++ fetchFilesFromDir(f)
-      case (acc, f) if isSourceJar(f)  => acc :+ f
-      case (acc, f) if isScalaFile(f)  => acc :+ f
-      case (acc, _)                    => acc
+  private def fetchFilesFromDir(config: Config, dir: List[File]): Seq[File] =
+    dir.foldLeft(Seq.empty[File]) {
+      case (acc, f) if (f.isDirectory) =>
+        acc ++ fetchFilesFromDir(config, f.listFiles.toList)
+      case (acc, f) if isSourceJar(f) && config.canFetchScalaJar => acc :+ f
+      case (acc, f) if isScalaFile(f) && config.canFetchScala    => acc :+ f
+      case (acc, _)                                              => acc
     }
 
   private def writeFile(file: File, lines: Seq[String]): Unit = {

@@ -88,13 +88,18 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
     op.toList
   }
 
+  private val allTypes = List(FileType.ScalaJar, FileType.Scala)
+
+  private def sameElements[A](a: List[A], b: List[A]): Assertion =
+    a should contain theSameElementsAs b
+
   "should capture all scala files in passed" in {
     runTest { cwd =>
       val f1 = mkFile(cwd)
       val up = mkDir(cwd)
       val f2 = mkFile(up)
       val files = List(f1, f2)
-      val config = Config(files, None, false, 0)
+      val config = Config(files, None, false, allTypes, 0)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -111,7 +116,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val (f2, entry2) = mkJar(up)
       val files = List(f1, f2)
-      val config = Config(files, None, false, 0)
+      val config = Config(files, None, false, allTypes, 0)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -133,7 +138,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val tagLoc = AbsolutePath.fromPath(up, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), false, 0)
+      val config = Config(files, Some(tagLoc.path), false, allTypes, 0)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
@@ -151,7 +156,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val down = mkDir(cwd.parent)
       val tagLoc = AbsolutePath.fromPath(down, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), false, 0)
+      val config = Config(files, Some(tagLoc.path), false, allTypes, 0)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
@@ -167,12 +172,46 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val f2 = mkFile(up)
       val files = List(f1, f2)
-      val config = Config(files, None, true, 0)
+      val config = Config(files, None, true, allTypes, 0)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
       val tags = readTags(tagLoc)
       tags shouldBe files
+    }
+  }
+
+  "should only pick up the files that are specified in fileTypes" in {
+    allTypes.foreach { t =>
+      runTest { cwd =>
+        val (f1, entry1) = mkJar(cwd)
+        val sf1 = mkFile(cwd)
+        val up = mkDir(cwd)
+        val (f2, entry2) = mkJar(up)
+        val sf2 = mkFile(up)
+        val files = List(f1, f2, sf1, sf2)
+        val config = Config(files, None, false, List(t), 0)
+        Cli.run_(cwd, config)
+
+        val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
+        val tags = readTags(tagLoc)
+        val jarFiles =
+          List((f1, entry1), (f2, entry2)).flatMap { case (f, es) =>
+            val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
+            es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
+          }
+        val scalaFiles =
+          List(sf1, sf2)
+            .map(AbsolutePath.unsafeAbsolute)
+            .map(_.relativeAgainst(tagLoc))
+
+        t match {
+          case FileType.ScalaJar =>
+            sameElements(tags, jarFiles)
+          case FileType.Scala =>
+            sameElements(tags, scalaFiles)
+        }
+      }
     }
   }
 }
