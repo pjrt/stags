@@ -4,11 +4,11 @@ import java.io.{File, PrintStream, PrintWriter}
 import java.nio.file.{Path, Paths}
 import java.util.zip.ZipFile
 import scala.util.Try
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.*
 
-import scala.meta._
+import scala.meta.*
 
-import co.pjrt.stags._
+import co.pjrt.stags.*
 import co.pjrt.stags.paths.AbsolutePath
 
 object Cli {
@@ -20,9 +20,7 @@ object Cli {
 
   final def run(cwd: AbsolutePath, config: Config): File = {
     val files =
-      config.files.flatMap(f =>
-        fetchScalaFiles(config, AbsolutePath.fromPath(cwd, f).toFile)
-      )
+      config.files.flatMap(f => fetchScalaFiles(config, AbsolutePath.fromPath(cwd, f).toFile))
     val outPath = config.outputFile.getOrElse(Paths.get("tags"))
     val out = AbsolutePath.fromPath(cwd, outPath)
 
@@ -47,7 +45,7 @@ object Cli {
         case f if isSourcesJar(f) =>
           val zipFile = new ZipFile(f)
           zipFile.entries.asScala.flatMap { entry =>
-            if (entry.getName.endsWith(".scala")) {
+            if (isScalaFileName(entry.getName)) {
               def p = zipFile.getInputStream(entry).parse[Source]
               Try(p)
                 .fold(t => Left(t.getMessage), parsedToEither)
@@ -92,8 +90,10 @@ object Cli {
   private def parsedToEither(p: Parsed[Source]): Either[String, Source] =
     p.toEither.fold(e => Left(e.message), Right(_))
 
-  private def isScalaFile(file: File) =
-    file.getName.endsWith(".scala")
+  private def isScalaFile(file: File) = isScalaFileName(file.getName)
+
+  private def isScalaFileName(name: String): Boolean =
+    name.endsWith(".scala") || name.endsWith(".sc")
 
   private def isSourcesJar(file: File) =
     file.getName.endsWith("sources.jar")
@@ -108,8 +108,8 @@ object Cli {
       case (acc, f) if (f.isDirectory) =>
         acc ++ fetchFilesFromDir(config, f.listFiles.toList)
       case (acc, f) if isSourcesJar(f) && config.canFetchSourcesJar => acc :+ f
-      case (acc, f) if isScalaFile(f) && config.canFetchScala       => acc :+ f
-      case (acc, _)                                                 => acc
+      case (acc, f) if isScalaFile(f) && config.canFetchScala => acc :+ f
+      case (acc, _) => acc
     }
 
   private def writeFile(file: File, lines: Seq[String]): Unit = {
@@ -125,7 +125,7 @@ object Cli {
       )
 
     try {
-      (header ++ lines) foreach { t =>
+      (header ++ lines).foreach { t =>
         pw.write(t)
         pw.write("\n")
       }
