@@ -1,13 +1,13 @@
 package co.pjrt.stags
 
-import scala.meta._
+import scala.meta.*
 
-import org.scalatest.Matchers
+import org.scalatest.matchers.*
 import org.scalactic.source.Position
 
 object Utils {
 
-  import Matchers._
+  import should.Matchers.*
 
   implicit class SeqOfTagsOps(val testCode: String) extends AnyVal {
 

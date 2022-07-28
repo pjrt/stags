@@ -7,13 +7,14 @@ import java.util.zip.*
 import scala.util.Random
 import scala.io.Source
 
-import org.scalatest.*
+import org.scalatest.{Tag as _, *}
+import org.scalatest.matchers.*
 
 import co.pjrt.stags.paths.AbsolutePath
 
-final class CliTest extends FreeSpec with BeforeAndAfter {
+final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
 
-  import Matchers.*
+  import should.Matchers.*
 
   private def mkTempDir: Path = {
 
@@ -28,8 +29,8 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
 
   private def mkFile(cwd: AbsolutePath, ext: String = "scala"): Path = {
 
-    val name = Random.nextInt.abs.toString
-    val p = Files.createTempFile(cwd.path, name, "." + ext)
+    val name = Random.nextInt().abs.toString
+    val p = Files.createTempFile(cwd.path, name, ".scala")
 
     val pw = new PrintWriter(p.toFile)
     val fileContent =
@@ -42,7 +43,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
 
   private def mkJar(cwd: AbsolutePath): (Path, List[ZipEntry]) = {
 
-    val name = Random.nextInt.abs.toString
+    val name = Random.nextInt().abs.toString
     val p = Files.createTempFile(cwd.path, name, "sources.jar")
 
     val baos = new FileOutputStream(p.toFile)
@@ -70,14 +71,14 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
 
   private def mkDir(cwd: AbsolutePath): AbsolutePath = {
 
-    val name = Random.nextInt.abs.toString
+    val name = Random.nextInt().abs.toString
     AbsolutePath.fromPath(cwd, Files.createTempDirectory(cwd.path, name))
   }
 
   private def readTags(p: AbsolutePath): List[Path] = {
 
     val op = for {
-      line <- Source.fromFile(p.toFile).getLines
+      line <- Source.fromFile(p.toFile).getLines()
       if !line.startsWith("!_TAG_")
     } yield {
       line.split('\t').toList match {

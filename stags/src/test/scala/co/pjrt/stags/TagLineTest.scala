@@ -1,27 +1,28 @@
 package co.pjrt.stags
 
-import java.nio.file._
+import java.nio.file.*
 
-import scala.meta._
+import scala.meta.*
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.{Tag as _, *}
+import org.scalatest.matchers.*
 
 import co.pjrt.stags.paths.AbsolutePath
 
-class TagLineTest extends FreeSpec with Matchers {
+class TagLineTest extends freespec.AnyFreeSpec with should.Matchers {
 
-  import Mod._
-  import Name._
+  import Mod.*
+  import Name.*
 
   def priv(scope: Option[String]) =
     scope match {
-      case None    => Private(Anonymous())
+      case None => Private(Anonymous())
       case Some(n) => Private(Indeterminate(n))
     }
 
   def prod(scope: Option[String]) =
     scope match {
-      case None    => Protected(Anonymous())
+      case None => Protected(Anonymous())
       case Some(n) => Protected(Indeterminate(n))
     }
 
@@ -35,7 +36,7 @@ class TagLineTest extends FreeSpec with Matchers {
 
       val testFile = AbsolutePath.fromPath(cwd, Paths.get("TestFile.scala"))
       TagLine(t, testFile.path.toString).vimTagLine shouldBe
-        s"""tagName\t$testFile\t${addr};"\tk"""
+      s"""tagName\t$testFile\t${addr};"\tk"""
     }
 
     "should produce a complete static tag line" in {
@@ -44,7 +45,7 @@ class TagLineTest extends FreeSpec with Matchers {
 
       val testFile = AbsolutePath.fromPath(cwd, Paths.get("TestFile.scala"))
       TagLine(t, testFile.path.toString).vimTagLine shouldBe
-        s"""tagName\t$testFile\t${addr};"\tk\tfile:"""
+      s"""tagName\t$testFile\t${addr};"\tk\tfile:"""
     }
   }
 

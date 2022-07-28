@@ -60,15 +60,13 @@ final case class Config(
 
 object Config {
 
-  implicit val zero: scopt.Zero[Config] =
-    scopt.Zero.zero(
-      Config(
-        Seq.empty,
-        None,
-        false,
-        List(FileType.SourcesJar, FileType.Scala),
-        1
-      )
+  val default: Config =
+    Config(
+      Seq.empty,
+      None,
+      false,
+      List(FileType.SourcesJar, FileType.Scala),
+      1
     )
 
   final val parser = new scopt.OptionParser[Config]("stags") {
@@ -126,5 +124,5 @@ object Config {
   }
 
   def parse(args: Array[String]): Option[Config] =
-    parser.parse(args, zero.zero)
+    parser.parse(args, Config.default)
 }

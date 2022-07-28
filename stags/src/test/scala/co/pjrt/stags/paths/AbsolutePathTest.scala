@@ -1,13 +1,14 @@
 package co.pjrt.stags.paths
 
-import java.nio.file._
+import java.nio.file.*
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.{Tag as _, *}
+import org.scalatest.matchers.*
 import org.scalactic.source.Position
 
-class AbsolutePathTest extends FreeSpec {
+class AbsolutePathTest extends freespec.AnyFreeSpec {
 
-  import Matchers._
+  import should.Matchers.*
 
   private val pwd = System.getProperty("user.dir")
 
@@ -29,7 +30,7 @@ class AbsolutePathTest extends FreeSpec {
       filePath
         .relativeAgainst(target)
         .toString
-        .replaceAllLiterally("\\", "/") //windows path sep is backwards
+        .replaceAllLiterally("\\", "/") // windows path sep is backwards
         .shouldBe(expectedS)
     }
 

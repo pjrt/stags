@@ -1,8 +1,9 @@
 package co.pjrt.stags
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.{Tag as _, *}
+import org.scalatest.matchers.*
 
-class ScopedTagTest extends FreeSpec with Matchers {
+class ScopedTagTest extends freespec.AnyFreeSpec with should.Matchers {
 
   def lscope(strs: String*) = Scope(strs.toSeq)
 
@@ -12,11 +13,13 @@ class ScopedTagTest extends FreeSpec with Matchers {
 
     val scope = lscope("X", "Y", "Z")
     val tag = Tag("test", true, addr, "k")
-    ScopedTag(scope, tag).mkScopedTags(3) shouldBe Seq(
-      Tag("test", true, addr, "k"),
-      Tag("X.test", true, addr, "k"),
-      Tag("Y.X.test", true, addr, "k"),
-      Tag("Z.Y.X.test", true, addr, "k")
+    ScopedTag(scope, tag).mkScopedTags(3) should be(
+      Seq(
+        Tag("test", true, addr, "k"),
+        Tag("X.test", true, addr, "k"),
+        Tag("Y.X.test", true, addr, "k"),
+        Tag("Z.Y.X.test", true, addr, "k")
+      )
     )
   }
 
@@ -24,10 +27,12 @@ class ScopedTagTest extends FreeSpec with Matchers {
 
     val scope = lscope("X", "Y", "Z")
     val tag = Tag("test", true, addr, "k")
-    ScopedTag(scope, tag).mkScopedTags(2) shouldBe Seq(
-      Tag("test", true, addr, "k"),
-      Tag("X.test", true, addr, "k"),
-      Tag("Y.X.test", true, addr, "k")
+    ScopedTag(scope, tag).mkScopedTags(2) should be(
+      Seq(
+        Tag("test", true, addr, "k"),
+        Tag("X.test", true, addr, "k"),
+        Tag("Y.X.test", true, addr, "k")
+      )
     )
   }
 
@@ -35,11 +40,13 @@ class ScopedTagTest extends FreeSpec with Matchers {
 
     val scope = lscope("X", "Y", "Z")
     val tag = Tag("test", true, addr, "k")
-    ScopedTag(scope, tag).mkScopedTags(4) shouldBe Seq(
-      Tag("test", true, addr, "k"),
-      Tag("X.test", true, addr, "k"),
-      Tag("Y.X.test", true, addr, "k"),
-      Tag("Z.Y.X.test", true, addr, "k")
+    ScopedTag(scope, tag).mkScopedTags(4) should be(
+      Seq(
+        Tag("test", true, addr, "k"),
+        Tag("X.test", true, addr, "k"),
+        Tag("Y.X.test", true, addr, "k"),
+        Tag("Z.Y.X.test", true, addr, "k")
+      )
     )
   }
 

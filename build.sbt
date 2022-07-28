@@ -1,14 +1,14 @@
 import java.nio.file.{Files, Paths}
-import java.nio.file.attribute.{PosixFilePermission => Perm}
+import java.nio.file.attribute.{PosixFilePermission as Perm}
 
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.*
 
-import ReleaseTransformations._
+import ReleaseTransformations.*
 
 lazy val stags =
   (project in file("stags"))
     .settings(
-      libraryDependencies += "org.scalameta" %% "scalameta" % "4.0.0"
+      libraryDependencies += "org.scalameta" %% "scalameta" % "4.5.11"
     )
 
 lazy val cli =
@@ -18,7 +18,7 @@ lazy val cli =
     .settings(
       name := "stags-cli",
       name in GraalVMNativeImage := "stags",
-      libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.0",
+      libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0",
       libraryDependencies += "com.martiansoftware" % "nailgun-server" % "0.9.1",
       mainClass in assembly := Some("co.pjrt.stags.cli.Main"),
       buildInfoKeys := Seq[BuildInfoKey](version),

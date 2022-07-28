@@ -1,15 +1,16 @@
 package co.pjrt.stags
 
-import scala.meta.{Position => _, _}
+import scala.meta.{Position as _, *}
 
-import org.scalatest._
+import org.scalatest.{Tag as _, *}
+import org.scalatest.matchers.*
 import org.scalactic.source.Position
 
-import Utils._
+import Utils.*
 
-class TagGeneratorTest extends FreeSpec with Matchers {
+class TagGeneratorTest extends freespec.AnyFreeSpec with should.Matchers {
 
-  import Inspectors._
+  import Inspectors.*
 
   private def abc(q: String*): Scope =
     Scope(Seq("c", "b", "a"), q.reverse.toSeq)
@@ -173,15 +174,15 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~>
-      List(
-        (abc(), "SomeObject", false),
-        (abc("SomeObject"), "InnerObject", false),
-        (abc("SomeObject", "InnerObject"), "privateHello", true),
-        (abc("SomeObject", "InnerObject"), "publicHello", false),
-        (abc(), "SealedTrait", false),
-        (Scope.empty, "f", false),
-        (Scope.empty, "protectedHello", false)
-      )
+    List(
+      (abc(), "SomeObject", false),
+      (abc("SomeObject"), "InnerObject", false),
+      (abc("SomeObject", "InnerObject"), "privateHello", true),
+      (abc("SomeObject", "InnerObject"), "publicHello", false),
+      (abc(), "SealedTrait", false),
+      (Scope.empty, "f", false),
+      (Scope.empty, "protectedHello", false)
+    )
   }
 
   "Should generate static tags for private[enclosing] and private[this]" in {
@@ -205,17 +206,17 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~>
-      List(
-        (abc(), "SomeObject", false),
-        (abc("SomeObject"), "InnerObject", true),
-        (abc("SomeObject", "InnerObject"), "publicHello", true),
-        (abc(), "SealedTrait", false),
-        (Scope.empty, "protectedHello", true),
-        (abc(), "PrivateClass", true),
-        (Scope.empty, "x", true),
-        (Scope.empty, "y", true),
-        (Scope.empty, "z", true)
-      )
+    List(
+      (abc(), "SomeObject", false),
+      (abc("SomeObject"), "InnerObject", true),
+      (abc("SomeObject", "InnerObject"), "publicHello", true),
+      (abc(), "SealedTrait", false),
+      (Scope.empty, "protectedHello", true),
+      (abc(), "PrivateClass", true),
+      (Scope.empty, "x", true),
+      (Scope.empty, "y", true),
+      (Scope.empty, "z", true)
+    )
   }
 
   "Should generate tags for Ctor params" - {
@@ -400,12 +401,12 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     testFile ~>
-      Seq(
-        (abc(), "A", false),
-        (abc("A"), "K", false),
-        (abc("A"), "f", false),
-        (abc("A"), "x", true)
-      )
+    Seq(
+      (abc(), "A", false),
+      (abc("A"), "K", false),
+      (abc("A"), "f", false),
+      (abc("A"), "x", true)
+    )
 
   }
 
@@ -424,10 +425,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       """.stripMargin
 
     tf ~>
-      List(
-        (abc("C"), "intInst", true),
-        (abc("C"), "listInst", true)
-      )
+    List(
+      (abc("C"), "intInst", true),
+      (abc("C"), "listInst", true)
+    )
   }
 
   "should generate tags for macro defs" in {
@@ -441,10 +442,10 @@ class TagGeneratorTest extends FreeSpec with Matchers {
       |}""".stripMargin
 
     t ~>
-      List(
-        (abc("T"), "someFunc", false),
-        (abc(), "T", false)
-      )
+    List(
+      (abc("T"), "someFunc", false),
+      (abc(), "T", false)
+    )
   }
 
   "address generation" - {

@@ -4,7 +4,7 @@ import java.io.{File, PrintStream, PrintWriter}
 import java.nio.file.{Path, Paths}
 import java.util.zip.ZipFile
 import scala.util.Try
-import scala.collection.JavaConverters.*
+import scala.jdk.CollectionConverters.*
 
 import scala.meta.*
 

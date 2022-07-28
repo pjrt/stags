@@ -129,7 +129,7 @@ object TagGenerator {
       case Pat.Wildcard() | Pat.SeqWildcard() =>
         // DESNOTE(2017-05-15, pjrt): underscored vals are inaccesable
         Seq.empty
-      case Pat.Bind(lhs, rhs) =>
+      case Pat.Bind(lhs, _) =>
         getFromPat(lhs)
       case _: Lit =>
         // DESNOTE(2017-07-14, pjrt): This is for patterns like `val 1 = x`
@@ -168,7 +168,7 @@ object TagGenerator {
       case _: Decl.Type => "ua"
 
       case _: Pkg.Object => "po"
-      case p: Term.Param => "m"
+      case _: Term.Param => "m"
     }
 
   private def tagForMember(
@@ -294,8 +294,8 @@ private object AddressGen {
 
     // DESNOTE(2017-12-21, pjrt): This should always return 0 or more, otherwise
     // scalameta wouldn't have parsed it.
-    val lineWithTagName: Int = tagName.pos.startLine - tree.pos.startLine
-    val line = tree.tokens.syntax.lines.skip(lineWithTagName.toLong).toArray.head.asInstanceOf[String].trim
+    val lineWithTagName = tagName.pos.startLine - tree.pos.startLine
+    val line = tree.tokens.syntax.lines.skip(lineWithTagName.toLong).findFirst.get.trim
 
     val name = tagName.value
     val replacement = s"\\\\zs$name"
