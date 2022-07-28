@@ -9,9 +9,9 @@ sealed trait FileType
 object FileType {
   def unapply(str: String): Option[FileType] =
     str match {
-      case "scala"       => Some(Scala)
+      case "scala" | "sc" => Some(Scala)
       case "sources-jar" => Some(SourcesJar)
-      case _             => None
+      case _ => None
     }
 
   case object Scala extends FileType // A scala source file
@@ -26,7 +26,8 @@ object FileType {
 }
 
 /**
- * @param files to generate tags for
+ * @param files
+ *   to generate tags for
  */
 final case class Config(
     files: Seq[Path],

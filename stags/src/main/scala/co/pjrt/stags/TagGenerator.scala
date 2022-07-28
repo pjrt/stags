@@ -1,6 +1,6 @@
 package co.pjrt.stags
 
-import scala.meta._
+import scala.meta.*
 
 object TagGenerator {
 
@@ -27,9 +27,9 @@ object TagGenerator {
   private def generatePackageScope(ref: Term.Ref): Scope = {
     def loop(r: Term, acc: Seq[String]): Seq[String] =
       r match {
-        case name: Term.Name     => acc :+ name.value
+        case name: Term.Name => acc :+ name.value
         case select: Term.Select => loop(select.qual, acc :+ select.name.value)
-        case _                   => acc
+        case _ => acc
       }
     Scope(loop(ref, Seq.empty))
   }
@@ -77,17 +77,17 @@ object TagGenerator {
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
         tagForMember(scope, d, static) +:
-          d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
+        d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
       case d: Pkg.Object =>
         val newScope = scope.addLocal(d.name)
         val static = getStatic(d.mods)
         tagForMember(scope, d, static) +:
-          d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
+        d.templ.stats.flatMap(s => tagsForStatement(newScope, s, static))
 
       case d: Defn.Trait =>
         val static = getStatic(d.mods)
         tagForMember(scope, d, static) +:
-          d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
+        d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
       case d: Defn.Class =>
         val ctorParamTags: Seq[ScopedTag] =
           if (d.isImplicitClass)
@@ -101,7 +101,7 @@ object TagGenerator {
 
         val static = getStatic(d.mods)
         (tagForMember(scope, d, static) +: ctorParamTags) ++
-          d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
+        d.templ.stats.flatMap(s => tagsForStatement(Scope.empty, s, static))
 
       case _ => Seq.empty
     }
@@ -119,7 +119,7 @@ object TagGenerator {
     def getFromPat(p: Pat) = getFromPats(scope, mods, p, staticParent, parent)
 
     pat match {
-      case p: Pat.Var      => Seq(patTag(scope, parent, p, static))
+      case p: Pat.Var => Seq(patTag(scope, parent, p, static))
       case Pat.Typed(p, _) => getFromPat(p)
       case Pat.Tuple(args) => args.flatMap(getFromPat)
       case Pat.Extract(_, pats) =>
@@ -144,15 +144,8 @@ object TagGenerator {
   /**
    * generate a kind of the member.
    *
-   * d: "data type" (case class)
-   * c: class
-   * f: function (def)
-   * v: vals
-   * b: vars (which are "bad")
-   * i: "interface" (trait)
-   * m: macros
-   * a: type "alias"
-   * po: package object
+   * d: "data type" (case class) c: class f: function (def) v: vals b: vars (which are "bad") i: "interface" (trait) m:
+   * macros a: type "alias" po: package object
    *
    * m: a ctor param
    *
@@ -160,18 +153,18 @@ object TagGenerator {
    */
   private def generateKind(t: Tree): String =
     t match {
-      case c: Defn.Class  => if (c.isCaseClass) "d" else "c"
+      case c: Defn.Class => if (c.isCaseClass) "d" else "c"
       case _: Defn.Object => "o"
-      case _: Defn.Def    => "f"
-      case _: Defn.Val    => "v"
-      case _: Defn.Var    => "b"
-      case _: Defn.Trait  => "i"
-      case _: Defn.Macro  => "m"
-      case _: Defn.Type   => "a"
+      case _: Defn.Def => "f"
+      case _: Defn.Val => "v"
+      case _: Defn.Var => "b"
+      case _: Defn.Trait => "i"
+      case _: Defn.Macro => "m"
+      case _: Defn.Type => "a"
 
-      case _: Decl.Def  => "uf"
-      case _: Decl.Val  => "uv"
-      case _: Decl.Var  => "ub"
+      case _: Decl.Def => "uf"
+      case _: Decl.Val => "uv"
+      case _: Decl.Var => "ub"
       case _: Decl.Type => "ua"
 
       case _: Pkg.Object => "po"
@@ -234,15 +227,13 @@ object TagGenerator {
         val firstIsStatic: Term.Param => Boolean = p =>
           if (isCase) isStatic(Scope.empty, p.mods)
           else isStaticCtorParam(p)
-        first.map(
-          p => tagForCtor(parent, p, firstIsStatic(p))
-        ) ++
-          (for {
-            pGroup <- rem
-            param <- pGroup
-          } yield {
-            tagForCtor(parent, param, isStaticCtorParam(param))
-          })
+        first.map(p => tagForCtor(parent, p, firstIsStatic(p))) ++
+        (for {
+          pGroup <- rem
+          param <- pGroup
+        } yield {
+          tagForCtor(parent, param, isStaticCtorParam(param))
+        })
       case Seq() => Nil
     }
   }
@@ -262,10 +253,10 @@ object TagGenerator {
   private def isStatic(prefix: Scope, mods: Seq[Mod]): Boolean =
     mods
       .collect {
-        case Mod.Implicit()                           => true
-        case Mod.Private(Name.Anonymous())            => true
+        case Mod.Implicit() => true
+        case Mod.Private(Name.Anonymous()) => true
         case Mod.Private(Term.This(Name.Anonymous())) => true
-        case Mod.Private(Name.Indeterminate(name))    =>
+        case Mod.Private(Name.Indeterminate(name)) =>
           // DESNOTE(2017-03-21, pjrt): If the name of the private thing
           // is the parent object, then it is just private.
           if (name == "this" || prefix.localContains(name))
@@ -282,11 +273,10 @@ private object AddressGen {
   /**
    * Generate an address for the given tree and location
    *
-   * The tree MUST be un-modified, otherwise the original syntax gets destroyed
-   * and an address cannot be created.
+   * The tree MUST be un-modified, otherwise the original syntax gets destroyed and an address cannot be created.
    *
-   * The tagName is used to find the line of the syntax that we care abour (we
-   * don't care about annotatons above the tag, nor about any existing body.
+   * The tagName is used to find the line of the syntax that we care abour (we don't care about annotatons above the
+   * tag, nor about any existing body.
    *
    * {{{
    * @someAnno
@@ -295,19 +285,17 @@ private object AddressGen {
    * }
    * }}}
    *
-   * In the example able, we only take `@someOtherAnoo def x: Int = {` as the
-   * address. Note that multi-line statements will get cut off (the tag will
-   * work regardless).
+   * In the example above, we only take `@someOtherAnoo def x: Int = {` as the address. Note that multi-line statements
+   * will get cut off (the tag will work regardless).
    *
-   * The tagname is also used to determine the location of the `\zs` for better
-   * cursor location.
+   * The tagname is also used to determine the location of the `\zs` for better cursor location.
    */
   def addrForTree(tree: Tree, tagName: Name): String = {
 
     // DESNOTE(2017-12-21, pjrt): This should always return 0 or more, otherwise
     // scalameta wouldn't have parsed it.
-    val lineWithTagName = tagName.pos.startLine - tree.pos.startLine
-    val line = tree.tokens.syntax.lines.toList(lineWithTagName).trim
+    val lineWithTagName: Int = tagName.pos.startLine - tree.pos.startLine
+    val line = tree.tokens.syntax.lines.skip(lineWithTagName.toLong).toArray.head.asInstanceOf[String].trim
 
     val name = tagName.value
     val replacement = s"\\\\zs$name"

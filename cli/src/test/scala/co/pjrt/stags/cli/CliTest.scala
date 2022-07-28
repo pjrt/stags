@@ -1,19 +1,19 @@
 package co.pjrt.stags.cli
 
-import java.io._
-import java.nio.file._
-import java.util.zip._
+import java.io.*
+import java.nio.file.*
+import java.util.zip.*
 
 import scala.util.Random
 import scala.io.Source
 
-import org.scalatest._
+import org.scalatest.*
 
 import co.pjrt.stags.paths.AbsolutePath
 
 final class CliTest extends FreeSpec with BeforeAndAfter {
 
-  import Matchers._
+  import Matchers.*
 
   private def mkTempDir: Path = {
 
@@ -26,10 +26,10 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
     t(cwd)
   }
 
-  private def mkFile(cwd: AbsolutePath): Path = {
+  private def mkFile(cwd: AbsolutePath, ext: String = "scala"): Path = {
 
     val name = Random.nextInt.abs.toString
-    val p = Files.createTempFile(cwd.path, name, ".scala")
+    val p = Files.createTempFile(cwd.path, name, "." + ext)
 
     val pw = new PrintWriter(p.toFile)
     val fileContent =
@@ -82,7 +82,7 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
     } yield {
       line.split('\t').toList match {
         case _ :: file :: _ => Paths.get(file)
-        case otherwise      => fail(s"Did not get a proper tag. Got $otherwise")
+        case otherwise => fail(s"Did not get a proper tag. Got $otherwise")
       }
     }
     op.toList
@@ -110,6 +110,23 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
     }
   }
 
+  "should capture all sc files in passed" in {
+    runTest { cwd =>
+      val f1 = mkFile(cwd, ext = "sc")
+      val up = mkDir(cwd)
+      val f2 = mkFile(up, ext = "sc")
+      val files = List(f1, f2)
+      val config = Config(files, None, false, allTypes, 0)
+      Cli.run_(cwd, config)
+
+      val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
+      val tags = readTags(tagLoc)
+      val relativizedFiles =
+        files.map(AbsolutePath.unsafeAbsolute).map(_.relativeAgainst(tagLoc))
+      tags shouldBe relativizedFiles
+    }
+  }
+
   "should capture all source jars files in passed" in {
     runTest { cwd =>
       val (f1, entry1) = mkJar(cwd)
@@ -122,9 +139,10 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
       val tags = readTags(tagLoc)
       val relativizedFiles =
-        List((f1, entry1), (f2, entry2)).flatMap { case (f, es) =>
-          val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
-          es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
+        List((f1, entry1), (f2, entry2)).flatMap {
+          case (f, es) =>
+            val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
+            es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
         }
       tags should contain theSameElementsAs (relativizedFiles)
     }
@@ -196,9 +214,10 @@ final class CliTest extends FreeSpec with BeforeAndAfter {
         val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
         val tags = readTags(tagLoc)
         val jarFiles =
-          List((f1, entry1), (f2, entry2)).flatMap { case (f, es) =>
-            val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
-            es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
+          List((f1, entry1), (f2, entry2)).flatMap {
+            case (f, es) =>
+              val rel = AbsolutePath.unsafeAbsolute(f).relativeAgainst(tagLoc)
+              es.map(e => Paths.get(s"zipfile:$rel::${e.getName()}"))
           }
         val scalaFiles =
           List(sf1, sf2)
