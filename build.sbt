@@ -1,5 +1,5 @@
 import java.nio.file.{Files, Paths}
-import java.nio.file.attribute.{PosixFilePermission as Perm}
+import java.nio.file.attribute.{PosixFilePermission => Perm}
 
 import scala.collection.JavaConverters.*
 
