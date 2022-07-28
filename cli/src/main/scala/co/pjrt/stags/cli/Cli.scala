@@ -47,19 +47,23 @@ object Cli {
           zipFile.entries.asScala.flatMap { entry =>
             if (isScalaFileName(entry.getName)) {
               def p = zipFile.getInputStream(entry).parse[Source]
+              val fullFilePath = f.getPath + "::" + entry.getName
               Try(p)
-                .fold(t => Left(t.getMessage), parsedToEither)
-                .fold(
-                  e => warn(f.getPath + "::" + entry.getName, e),
-                  TagGenerator.generateTags
-                )
-                .flatMap(s =>
-                  toJarTagLine(
-                    AbsolutePath.fromPath(cwd, f.toPath),
-                    entry.getName,
-                    s
-                  )
-                )
+                .map { p =>
+                  parsedToEither(p)
+                    .fold(
+                      e => warnIssueInFile(e),
+                      TagGenerator.generateTags
+                    )
+                    .flatMap(s =>
+                      toJarTagLine(
+                        AbsolutePath.fromPath(cwd, f.toPath),
+                        entry.getName,
+                        s
+                      )
+                    )
+                }
+                .fold(t => error(fullFilePath, t.getMessage), identity)
             } else {
               Nil
             }
@@ -68,9 +72,12 @@ object Cli {
           // DESNOTE(2018-08-03, pjrt): Though parse returns a failure, it can still
           // throw exceptions. See #16
           Try(f.parse[Source])
-            .fold(t => Left(t.getMessage), parsedToEither)
-            .fold(e => warn(f.getPath, e), TagGenerator.generateTags)
-            .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
+            .map { s =>
+              parsedToEither(s)
+                .fold(e => warnIssueInFile(e), TagGenerator.generateTags)
+                .flatMap(s => toTagLine(AbsolutePath.fromPath(cwd, f.toPath), s))
+            }
+            .fold(t => error(f.getPath, t.getMessage), identity)
       }
 
     val sortedTags = TagLine.foldCaseSorting(tags)
@@ -80,15 +87,20 @@ object Cli {
   }
 
   private lazy val err: PrintStream = System.err
-  private def warn(file: String, msg: String): Seq[ScopedTag] = {
+  private def error[A](file: String, msg: String): Seq[A] = {
 
-    val warnMsg = s"${LogLevel.warn} Error in $file: $msg"
-    err.println(warnMsg)
+    val outMsg = s"${LogLevel.error} Error in $file: $msg"
+    err.println(outMsg)
+    Seq.empty
+  }
+  private def warnIssueInFile(e: Parsed.Error): Seq[ScopedTag] = {
+
+    err.println(e.toString)
     Seq.empty
   }
 
-  private def parsedToEither(p: Parsed[Source]): Either[String, Source] =
-    p.toEither.fold(e => Left(e.message), Right(_))
+  private def parsedToEither(p: Parsed[Source]): Either[Parsed.Error, Source] =
+    p.toEither.fold(e => Left(e), Right(_))
 
   private def isScalaFile(file: File) = isScalaFileName(file.getName)
 
