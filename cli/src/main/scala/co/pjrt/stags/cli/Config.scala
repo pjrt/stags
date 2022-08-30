@@ -3,6 +3,9 @@ package co.pjrt.stags.cli
 import java.io.File
 import java.nio.file.Path
 
+import scala.meta.Dialect
+import scala.meta.dialects.*
+
 import co.pjrt.stags.GeneratorConfig
 
 sealed trait FileType
@@ -34,7 +37,8 @@ final case class Config(
     outputFile: Option[Path],
     absoluteTags: Boolean,
     fileTypes: Seq[FileType],
-    qualifiedDepth: Int) {
+    qualifiedDepth: Int,
+    dialect: Dialect) {
 
   def appendFile(file: Path): Config =
     this.copy(files = files :+ file)
@@ -51,6 +55,9 @@ final case class Config(
   def setFileTypes(ts: Seq[FileType]): Config =
     this.copy(fileTypes = ts)
 
+  def setDialect(d: Dialect): Config =
+    this.copy(dialect = d)
+
   val canFetchSourcesJar: Boolean = fileTypes.contains(FileType.SourcesJar)
   val canFetchScala: Boolean = fileTypes.contains(FileType.Scala)
 
@@ -66,8 +73,18 @@ object Config {
       None,
       false,
       List(FileType.SourcesJar, FileType.Scala),
-      1
+      1,
+      Scala213Source3
     )
+
+  implicit val dialectRead: scopt.Read[Dialect] =
+    scopt.Read.reads[Dialect] { s =>
+      validateDialect(s) match {
+        case Right(x) => x
+        case Left(msg) =>
+          throw new IllegalArgumentException(msg)
+      }
+    }
 
   final val parser = new scopt.OptionParser[Config]("stags") {
     head("stags", build.BuildInfo.version)
@@ -115,6 +132,13 @@ object Config {
       .text(
         "set files to be absolute (/path/to/file instead of ./file) in the tags files"
       )
+
+    opt[Dialect]("dialect")
+      .optional()
+      .action((x, c) => c.setDialect(x))
+      .text(
+        "set the Scalameta Scala dialect. Default Scala213Source3"
+      )
     note(
       """
       |By default tags are written relative to the 'output' file, but if you are tagging jars
@@ -125,4 +149,12 @@ object Config {
 
   def parse(args: Array[String]): Option[Config] =
     parser.parse(args, Config.default)
+
+  private def validateDialect(s: String): Either[String, Dialect] = s match {
+    case "Scala213Source3" => Right(Scala213Source3)
+    case "Scala213" => Right(Scala213)
+    case "Scala212Source3" => Right(Scala212Source3)
+    case "Scala212" => Right(Scala212)
+    case otherwise => Left(s"`$otherwise` is not allowed. See --help")
+  }
 }

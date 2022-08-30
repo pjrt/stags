@@ -46,7 +46,7 @@ object Cli {
           val zipFile = new ZipFile(f)
           zipFile.entries.asScala.flatMap { entry =>
             if (isScalaFileName(entry.getName)) {
-              def p = zipFile.getInputStream(entry).parse[Source]
+              def p = config.dialect(zipFile.getInputStream(entry)).parse[Source]
               val fullFilePath = f.getPath + "::" + entry.getName
               Try(p)
                 .map { p =>
@@ -71,7 +71,7 @@ object Cli {
         case f =>
           // DESNOTE(2018-08-03, pjrt): Though parse returns a failure, it can still
           // throw exceptions. See #16
-          Try(f.parse[Source])
+          Try(config.dialect(f).parse[Source])
             .map { s =>
               parsedToEither(s)
                 .fold(e => warnIssueInFile(e), TagGenerator.generateTags)

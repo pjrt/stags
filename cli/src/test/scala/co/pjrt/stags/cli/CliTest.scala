@@ -6,8 +6,9 @@ import java.util.zip.*
 
 import scala.util.Random
 import scala.io.Source
+import scala.meta.dialects.*
 
-import org.scalatest.{Tag as _, *}
+import org.scalatest.{Tag => _, _}
 import org.scalatest.matchers.*
 
 import co.pjrt.stags.paths.AbsolutePath
@@ -54,6 +55,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
 
     val fileContent1 =
       """|package a.b.c
+         |import a.b.c.d as k
          |object X""".stripMargin
     val fileContent2 =
       """|package a.b.k
@@ -100,7 +102,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val f2 = mkFile(up)
       val files = List(f1, f2)
-      val config = Config(files, None, false, allTypes, 0)
+      val config = Config(files, None, false, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -117,7 +119,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val f2 = mkFile(up, ext = "sc")
       val files = List(f1, f2)
-      val config = Config(files, None, false, allTypes, 0)
+      val config = Config(files, None, false, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -134,7 +136,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val (f2, entry2) = mkJar(up)
       val files = List(f1, f2)
-      val config = Config(files, None, false, allTypes, 0)
+      val config = Config(files, None, false, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -157,7 +159,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val tagLoc = AbsolutePath.fromPath(up, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), false, allTypes, 0)
+      val config = Config(files, Some(tagLoc.path), false, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
@@ -175,7 +177,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val down = mkDir(cwd.parent)
       val tagLoc = AbsolutePath.fromPath(down, Paths.get("tags"))
 
-      val config = Config(files, Some(tagLoc.path), false, allTypes, 0)
+      val config = Config(files, Some(tagLoc.path), false, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tags = readTags(tagLoc)
@@ -191,7 +193,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
       val up = mkDir(cwd)
       val f2 = mkFile(up)
       val files = List(f1, f2)
-      val config = Config(files, None, true, allTypes, 0)
+      val config = Config(files, None, true, allTypes, 0, Scala213Source3)
       Cli.run_(cwd, config)
 
       val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
@@ -209,7 +211,7 @@ final class CliTest extends freespec.AnyFreeSpec with BeforeAndAfter {
         val (f2, entry2) = mkJar(up)
         val sf2 = mkFile(up)
         val files = List(f1, f2, sf1, sf2)
-        val config = Config(files, None, false, List(t), 0)
+        val config = Config(files, None, false, List(t), 0, Scala213Source3)
         Cli.run_(cwd, config)
 
         val tagLoc = AbsolutePath.fromPath(cwd, Paths.get("tags"))
